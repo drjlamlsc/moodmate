@@ -41,9 +41,10 @@ const DEFAULT_TAGS = [
 ];
 
 const state = {
-  lang: "en",
+  // "en" | "zh". Chinese is the default for a first run; a stored preference
+  // always wins, so anyone who has picked EN keeps it.
+  lang: "zh",
   character: "girl",                             // which body is worn
-  // "en" | "zh"
   entries: {},                                   // "YYYY-MM-DD" -> {mood, note, tags}
   tags: [],                                      // {id, label, icon, group, order, archived}
   outfit: { hat: null, top: null, bottom: null },

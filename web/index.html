@@ -1,9 +1,13 @@
 <!doctype html>
-<html lang="en">
+<!-- The static markup below is written in Chinese because that is the default
+     for a first run. app.js repaints everything from i18n.js the moment it
+     loads, so this only decides what the very first frame looks like — and a
+     flash of English before the repaint is exactly what it avoids. -->
+<html lang="zh-Hant-HK">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Moodmate</title>
+<title>心情夥伴</title>
 <meta name="theme-color" content="#f5eefa">
 <!-- iOS only honours the manifest's display:standalone from 16.4 on. These
      legacy meta tags are what older iPhones read, and newer ones ignore. -->
@@ -22,15 +26,15 @@
   <section class="screen" id="screen-today" data-screen="today">
     <header class="topbar">
       <div>
-        <h1 id="entry-title">Today</h1>
+        <h1 id="entry-title">今日</h1>
         <div class="date-row">
           <input type="date" id="entry-date" aria-label="Entry date">
-          <button class="ghost small" id="jump-today" data-i18n="jumpToday" hidden>Today</button>
+          <button class="ghost small" id="jump-today" data-i18n="jumpToday" hidden>返回今日</button>
         </div>
       </div>
       <div class="header-right">
         <div class="seg" id="lang-toggle">
-          <button data-lang="en" class="on">EN</button><button data-lang="zh">中</button>
+          <button data-lang="en">EN</button><button data-lang="zh" class="on">中</button>
         </div>
       <div class="streak" id="streak" title="Day streak">
         <span class="flame">✿</span><span id="streak-count">0</span>
@@ -44,26 +48,26 @@
 
     <div class="picker" id="picker" role="radiogroup" aria-label="How are you feeling?"></div>
 
-    <label class="note-label" for="note" data-i18n="noteLabel">Anything you want to remember?</label>
-    <textarea id="note" rows="3" data-i18n-ph="notePlaceholder" placeholder="today I…"></textarea>
+    <label class="note-label" for="note" data-i18n="noteLabel">有什麼想記低嗎？</label>
+    <textarea id="note" rows="3" data-i18n-ph="notePlaceholder" placeholder="今日我…"></textarea>
 
-    <p class="note-label spaced" data-i18n="tagsLabel">What did you get up to?</p>
+    <p class="note-label spaced" data-i18n="tagsLabel">今日做咗啲乜？</p>
     <div id="tags-today"></div>
 
-    <button class="primary" id="save">Save entry</button>
-    <p class="saved-hint" id="saved-hint" data-i18n="saved" hidden>Saved ✓</p>
-    <button class="ghost danger block" id="delete-today" data-i18n="deleteEntry" hidden>Delete this entry</button>
+    <button class="primary" id="save">儲存記錄</button>
+    <p class="saved-hint" id="saved-hint" data-i18n="saved" hidden>已儲存 ✓</p>
+    <button class="ghost danger block" id="delete-today" data-i18n="deleteEntry" hidden>刪除呢條記錄</button>
     <div class="confirm-row" id="confirm-delete" hidden>
-      <span data-i18n="confirmDelete">Delete this entry? This can't be undone.</span>
-      <button class="ghost danger" id="confirm-yes" data-i18n="del">Delete</button>
-      <button class="ghost" id="confirm-no" data-i18n="keep">Keep</button>
+      <span data-i18n="confirmDelete">確定刪除呢條記錄？此操作無法復原。</span>
+      <button class="ghost danger" id="confirm-yes" data-i18n="del">刪除</button>
+      <button class="ghost" id="confirm-no" data-i18n="keep">保留</button>
     </div>
   </section>
 
   <!-- ── History ─────────────────────────────────────────────── -->
   <section class="screen" id="screen-history" data-screen="history" hidden>
     <header class="topbar">
-      <h1 data-i18n="history">History</h1>
+      <h1 data-i18n="history">記錄</h1>
       <div class="month-nav">
         <button id="prev-month" aria-label="Previous month">‹</button>
         <span id="month-label"></span>
@@ -82,22 +86,22 @@
   <section class="screen" id="screen-tags" data-screen="tags" hidden>
     <header class="topbar">
       <div>
-        <h1 data-i18n="tags">Tags</h1>
-        <p class="date" data-i18n="tagsHint">Archive keeps past entries intact</p>
+        <h1 data-i18n="tags">標籤</h1>
+        <p class="date" data-i18n="tagsHint">封存唔會影響過往記錄</p>
       </div>
-      <button class="ghost small" id="tags-back" data-i18n="done">Done</button>
+      <button class="ghost small" id="tags-back" data-i18n="done">完成</button>
     </header>
 
     <div class="new-tag">
       <input id="new-tag-icon" class="icon-input" placeholder="✨" maxlength="4" aria-label="Emoji">
-      <input id="new-tag-label" class="name-input" data-i18n-ph="newTag" placeholder="New tag" aria-label="Tag name">
+      <input id="new-tag-label" class="name-input" data-i18n-ph="newTag" placeholder="新標籤" aria-label="Tag name">
       <select id="new-tag-group" aria-label="Group">
-        <option value="life" data-i18n="groupLife">Life</option>
-        <option value="social" data-i18n="groupSocial">Social</option>
-        <option value="health" data-i18n="groupHealth">Health</option>
-        <option value="leisure" data-i18n="groupLeisure">Leisure</option>
+        <option value="life" data-i18n="groupLife">生活</option>
+        <option value="social" data-i18n="groupSocial">社交</option>
+        <option value="health" data-i18n="groupHealth">健康</option>
+        <option value="leisure" data-i18n="groupLeisure">休閒</option>
       </select>
-      <button class="ghost small primary-ghost" id="add-tag" data-i18n="add">Add</button>
+      <button class="ghost small primary-ghost" id="add-tag" data-i18n="add">新增</button>
     </div>
 
     <div id="tag-manage"></div>
@@ -106,14 +110,14 @@
   <!-- ── Closet ──────────────────────────────────────────────── -->
   <section class="screen" id="screen-closet" data-screen="closet" hidden>
     <header class="topbar">
-      <h1 data-i18n="closet">Closet</h1>
+      <h1 data-i18n="closet">衣櫥</h1>
       <p class="date" id="closet-progress"></p>
     </header>
     <div class="stage stage-sm">
       <div class="char" id="char-closet"></div>
     </div>
     <div class="slot">
-      <h2 data-i18n="character">Character</h2>
+      <h2 data-i18n="character">角色</h2>
       <div class="grid char-grid" id="char-picker"></div>
     </div>
     <div id="slots"></div>
@@ -122,9 +126,9 @@
 </main>
 
 <nav class="tabs" id="tabs">
-  <button data-goto="today" class="active"><span>✎</span><i data-i18n="today">Today</i></button>
-  <button data-goto="history"><span>▦</span><i data-i18n="history">History</i></button>
-  <button data-goto="closet"><span>✿</span><i data-i18n="closet">Closet</i></button>
+  <button data-goto="today" class="active"><span>✎</span><i data-i18n="today">今日</i></button>
+  <button data-goto="history"><span>▦</span><i data-i18n="history">記錄</i></button>
+  <button data-goto="closet"><span>✿</span><i data-i18n="closet">衣櫥</i></button>
 </nav>
 
 <script src="i18n.js"></script>
