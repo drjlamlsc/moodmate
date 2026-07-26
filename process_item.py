@@ -250,6 +250,16 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
         sys.exit("FAIL: contour fill leaked — the item outline has a gap. "
                  "Patch the gap in the render, or re-roll it.")
     else:
+        # 6px is a measured compromise, not an oversight. A thick outline can
+        # outrun it — the wide-leg jeans' 9px outer contour loses ~1200px of its
+        # outer half — but every attempt to reclaim that generally has cost far
+        # more than it fixed. Growing outward through *repainted* pixels crawls
+        # the whole figure, because a re-render shifts every base outline enough
+        # to qualify: all 23 items inflated, the sailor blouse by 34%. Growing
+        # only through *dark* pixels fails the same way, since the character's
+        # own outline is dark and touches the garment's: sailor +30%. Widening
+        # the radius trades one item's missing sliver for every other item's
+        # halo. Leave it; patch thick-outline items in icon_cuts.json instead.
         near = morph(body, "dilate", 6)
         mask = body | (dark & near)
         mask = morph(morph(mask, "dilate", 2), "erode", 2) & opaque
@@ -373,9 +383,21 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
     print("check qa/%s_alone.png for stray pixels." % name)
 
 
+# Items whose line art the self-tuning threshold cannot find on its own, with
+# the value that was measured to work. Recorded here because it is not
+# recoverable from the output: reprocessing the navy gakuran without it silently
+# yields 26863px instead of 44606px — a valid-looking layer missing a third of
+# the jacket.
+DARK_OVERRIDES = {"male_gakuran": 55}
+
+
 if __name__ == "__main__":
     if len(sys.argv) not in (3, 4, 5):
         sys.exit(__doc__)
     # 3rd arg: master to extract against, for a second character.
     # 4th arg: line-art luminance, for garments darker than the outlines.
-    main(*sys.argv[1:5])
+    argv = list(sys.argv[1:5])
+    if len(argv) < 4 and argv[1] in DARK_OVERRIDES:
+        argv = (argv + [None] * 3)[:3] + [DARK_OVERRIDES[argv[1]]]
+        argv[2] = argv[2] or "base_char_master.png"
+    main(*argv)
