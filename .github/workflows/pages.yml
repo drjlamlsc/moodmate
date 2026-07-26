@@ -1,0 +1,35 @@
+# Publishes web/ to GitHub Pages on every push to main.
+#
+# The alternative — Pages' built-in "serve from a folder" — only accepts the
+# repo root or /docs, which would mean renaming web/ and breaking export_web.py.
+# This keeps the art pipeline and the app in one repo with the paths intact.
+name: Deploy to Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,442 @@
+{
+  "canvas": 512,
+  "slots": {
+    "bottom": 10,
+    "top": 20,
+    "face": 30,
+    "hat": 40
+  },
+  "characters": [
+    {
+      "id": "girl",
+      "label": "Girl",
+      "label_zh": "\u5973\u751f",
+      "base": "base.png"
+    },
+    {
+      "id": "boy",
+      "label": "Boy",
+      "label_zh": "\u7537\u751f",
+      "base": "base_male.png"
+    }
+  ],
+  "items": [
+    {
+      "id": "beanie",
+      "slot": "hat",
+      "label": "Pom-Pom Beanie",
+      "label_zh": "\u6bdb\u7403\u51b7\u5e3d",
+      "unlockAt": 0,
+      "icon": "icon_beanie.png",
+      "layer": {
+        "girl": "item_beanie.png",
+        "boy": "item_beanie.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "beret",
+      "slot": "hat",
+      "label": "Rose Beret",
+      "label_zh": "\u73ab\u7470\u8c9d\u96f7\u5e3d",
+      "unlockAt": 0,
+      "icon": "icon_beret.png",
+      "layer": {
+        "girl": "item_beret.png",
+        "boy": "item_beret.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "cat_ears",
+      "slot": "hat",
+      "label": "Cat Ears",
+      "label_zh": "\u8c93\u8033\u9aee\u7b8d",
+      "unlockAt": 0,
+      "icon": "icon_cat_ears.png",
+      "layer": {
+        "girl": "item_cat_ears.png",
+        "boy": "item_cat_ears.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "bow",
+      "slot": "hat",
+      "label": "Ribbon Bow",
+      "label_zh": "\u7dde\u5e36\u8774\u8776\u7d50",
+      "unlockAt": 0,
+      "icon": "icon_bow.png",
+      "layer": {
+        "girl": "item_bow.png",
+        "boy": "item_bow.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "flower_crown",
+      "slot": "hat",
+      "label": "Flower Crown",
+      "label_zh": "\u96db\u83ca\u82b1\u74b0",
+      "unlockAt": 0,
+      "icon": "icon_flower_crown.png",
+      "layer": {
+        "girl": "item_flower_crown.png",
+        "boy": "item_flower_crown.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "headphones",
+      "slot": "hat",
+      "label": "Headphones",
+      "label_zh": "\u8033\u6a5f",
+      "unlockAt": 0,
+      "icon": "icon_headphones.png",
+      "layer": {
+        "girl": "item_headphones.png",
+        "boy": "item_headphones.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "star_clips",
+      "slot": "hat",
+      "label": "Star Clips",
+      "label_zh": "\u661f\u661f\u9aee\u593e",
+      "unlockAt": 0,
+      "icon": "icon_star_clips.png",
+      "layer": {
+        "girl": "item_star_clips.png",
+        "boy": "item_star_clips.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "hoodie",
+      "slot": "top",
+      "label": "Cosy Hoodie",
+      "label_zh": "\u8212\u9069\u885b\u8863",
+      "unlockAt": 0,
+      "icon": "icon_hoodie.png",
+      "layer": {
+        "girl": "item_hoodie.png",
+        "boy": "item_hoodie.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "cardigan",
+      "slot": "top",
+      "label": "Knit Cardigan",
+      "label_zh": "\u91dd\u7e54\u958b\u886b",
+      "unlockAt": 0,
+      "icon": "icon_cardigan.png",
+      "layer": {
+        "girl": "item_cardigan.png",
+        "boy": "item_cardigan.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "sweater",
+      "slot": "top",
+      "label": "Striped Sweater",
+      "label_zh": "\u689d\u7d0b\u6bdb\u8863",
+      "unlockAt": 0,
+      "icon": "icon_sweater.png",
+      "layer": {
+        "girl": "item_sweater.png",
+        "boy": "item_sweater.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "sailor",
+      "slot": "top",
+      "label": "Sailor Blouse",
+      "label_zh": "\u6c34\u624b\u670d\u4e0a\u8863",
+      "unlockAt": 0,
+      "icon": "icon_sailor.png",
+      "layer": {
+        "girl": "item_sailor.png",
+        "boy": "item_sailor.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "turtleneck",
+      "slot": "top",
+      "label": "Turtleneck",
+      "label_zh": "\u6a3d\u9818\u6bdb\u8863",
+      "unlockAt": 0,
+      "icon": "icon_turtleneck.png",
+      "layer": {
+        "girl": "item_turtleneck.png",
+        "boy": "item_turtleneck.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "denim_jacket",
+      "slot": "top",
+      "label": "Denim Jacket",
+      "label_zh": "\u725b\u4ed4\u5916\u5957",
+      "unlockAt": 0,
+      "icon": "icon_denim_jacket.png",
+      "layer": {
+        "girl": "item_denim_jacket.png",
+        "boy": "item_denim_jacket.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "skirt_pleated",
+      "slot": "bottom",
+      "label": "Pleated Skirt",
+      "label_zh": "\u767e\u8936\u88d9",
+      "unlockAt": 0,
+      "icon": "icon_skirt_pleated.png",
+      "layer": {
+        "girl": "item_skirt_pleated.png",
+        "boy": "item_skirt_pleated.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "skirt_plaid",
+      "slot": "bottom",
+      "label": "Plaid Skirt",
+      "label_zh": "\u683c\u4ed4\u88d9",
+      "unlockAt": 0,
+      "icon": "icon_skirt_plaid.png",
+      "layer": {
+        "girl": "item_skirt_plaid.png",
+        "boy": "item_skirt_plaid.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "skirt_corduroy",
+      "slot": "bottom",
+      "label": "Corduroy Skirt",
+      "label_zh": "\u71c8\u82af\u7d68\u88d9",
+      "unlockAt": 0,
+      "icon": "icon_skirt_corduroy.png",
+      "layer": {
+        "girl": "item_skirt_corduroy.png",
+        "boy": "item_skirt_corduroy.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "jeans",
+      "slot": "bottom",
+      "label": "Wide-Leg Jeans",
+      "label_zh": "\u95ca\u8173\u725b\u4ed4\u8932",
+      "unlockAt": 0,
+      "icon": "icon_jeans.png",
+      "layer": {
+        "girl": "item_jeans.png",
+        "boy": "item_jeans.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "joggers",
+      "slot": "bottom",
+      "label": "Joggers",
+      "label_zh": "\u675f\u8173\u904b\u52d5\u8932",
+      "unlockAt": 0,
+      "icon": "icon_joggers.png",
+      "layer": {
+        "girl": "item_joggers.png",
+        "boy": "item_joggers.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "denim_shorts",
+      "slot": "bottom",
+      "label": "Denim Shorts",
+      "label_zh": "\u725b\u4ed4\u77ed\u8932",
+      "unlockAt": 0,
+      "icon": "icon_denim_shorts.png",
+      "layer": {
+        "girl": "item_denim_shorts.png",
+        "boy": "item_denim_shorts.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "male_cap",
+      "slot": "hat",
+      "label": "Baseball Cap",
+      "label_zh": "\u68d2\u7403\u5e3d",
+      "unlockAt": 0,
+      "icon": "icon_male_cap.png",
+      "layer": {
+        "girl": "item_male_cap.png",
+        "boy": "item_male_cap.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "male_gakuran",
+      "slot": "top",
+      "label": "Gakuran Jacket",
+      "label_zh": "\u5b78\u751f\u5916\u5957",
+      "unlockAt": 0,
+      "icon": "icon_male_gakuran.png",
+      "layer": {
+        "girl": "item_male_gakuran.png",
+        "boy": "item_male_gakuran.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "male_bomber",
+      "slot": "top",
+      "label": "Bomber Jacket",
+      "label_zh": "\u98db\u884c\u5916\u5957",
+      "unlockAt": 0,
+      "icon": "icon_male_bomber.png",
+      "layer": {
+        "girl": "item_male_bomber.png",
+        "boy": "item_male_bomber.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "male_tie_shirt",
+      "slot": "top",
+      "label": "Shirt & Tie",
+      "label_zh": "\u6064\u886b\u9818\u5454",
+      "unlockAt": 0,
+      "icon": "icon_male_tie_shirt.png",
+      "layer": {
+        "girl": "item_male_tie_shirt.png",
+        "boy": "item_male_tie_shirt.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    }
+  ],
+  "moods": [
+    {
+      "key": "awful",
+      "label": "Awful",
+      "label_zh": "\u597d\u5dee",
+      "layer": {
+        "girl": "face_awful.png",
+        "boy": "face_male_awful.png"
+      },
+      "color": "#e0574f"
+    },
+    {
+      "key": "bad",
+      "label": "Bad",
+      "label_zh": "\u5514\u597d",
+      "layer": {
+        "girl": "face_bad.png",
+        "boy": "face_male_bad.png"
+      },
+      "color": "#ee8b3c"
+    },
+    {
+      "key": "meh",
+      "label": "Meh",
+      "label_zh": "\u4e00\u822c",
+      "layer": {},
+      "color": "#d9b02c"
+    },
+    {
+      "key": "good",
+      "label": "Good",
+      "label_zh": "\u5514\u932f",
+      "layer": {
+        "girl": "face_good.png",
+        "boy": "face_male_good.png"
+      },
+      "color": "#8ab534"
+    },
+    {
+      "key": "rad",
+      "label": "Rad",
+      "label_zh": "\u8d85\u6b63",
+      "layer": {
+        "girl": "face_happy.png",
+        "boy": "face_male_happy.png"
+      },
+      "color": "#3ea56a"
+    }
+  ]
+}

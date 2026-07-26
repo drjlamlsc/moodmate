@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Moodmate</title>
+<meta name="theme-color" content="#f5eefa">
+<!-- iOS only honours the manifest's display:standalone from 16.4 on. These
+     legacy meta tags are what older iPhones read, and newer ones ignore. -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Moodmate">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/appicon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<main id="app">
+
+  <!-- ── Today ───────────────────────────────────────────────── -->
+  <section class="screen" id="screen-today" data-screen="today">
+    <header class="topbar">
+      <div>
+        <h1 id="entry-title">Today</h1>
+        <div class="date-row">
+          <input type="date" id="entry-date" aria-label="Entry date">
+          <button class="ghost small" id="jump-today" data-i18n="jumpToday" hidden>Today</button>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="seg" id="lang-toggle">
+          <button data-lang="en" class="on">EN</button><button data-lang="zh">中</button>
+        </div>
+      <div class="streak" id="streak" title="Day streak">
+        <span class="flame">✿</span><span id="streak-count">0</span>
+      </div>
+      </div>
+    </header>
+
+    <div class="stage">
+      <div class="char" id="char"></div>
+    </div>
+
+    <div class="picker" id="picker" role="radiogroup" aria-label="How are you feeling?"></div>
+
+    <label class="note-label" for="note" data-i18n="noteLabel">Anything you want to remember?</label>
+    <textarea id="note" rows="3" data-i18n-ph="notePlaceholder" placeholder="today I…"></textarea>
+
+    <p class="note-label spaced" data-i18n="tagsLabel">What did you get up to?</p>
+    <div id="tags-today"></div>
+
+    <button class="primary" id="save">Save entry</button>
+    <p class="saved-hint" id="saved-hint" data-i18n="saved" hidden>Saved ✓</p>
+    <button class="ghost danger block" id="delete-today" data-i18n="deleteEntry" hidden>Delete this entry</button>
+    <div class="confirm-row" id="confirm-delete" hidden>
+      <span data-i18n="confirmDelete">Delete this entry? This can't be undone.</span>
+      <button class="ghost danger" id="confirm-yes" data-i18n="del">Delete</button>
+      <button class="ghost" id="confirm-no" data-i18n="keep">Keep</button>
+    </div>
+  </section>
+
+  <!-- ── History ─────────────────────────────────────────────── -->
+  <section class="screen" id="screen-history" data-screen="history" hidden>
+    <header class="topbar">
+      <h1 data-i18n="history">History</h1>
+      <div class="month-nav">
+        <button id="prev-month" aria-label="Previous month">‹</button>
+        <span id="month-label"></span>
+        <button id="next-month" aria-label="Next month">›</button>
+      </div>
+    </header>
+    <div class="tagrow filter" id="tag-filter" hidden></div>
+    <div class="weekdays" id="weekdays"></div>
+    <div class="calendar" id="calendar"></div>
+    <div class="entry-detail" id="entry-detail" hidden></div>
+    <div class="stats" id="stats"></div>
+    <section class="tag-stats" id="tag-stats" hidden></section>
+  </section>
+
+  <!-- ── Manage tags ─────────────────────────────────────────── -->
+  <section class="screen" id="screen-tags" data-screen="tags" hidden>
+    <header class="topbar">
+      <div>
+        <h1 data-i18n="tags">Tags</h1>
+        <p class="date" data-i18n="tagsHint">Archive keeps past entries intact</p>
+      </div>
+      <button class="ghost small" id="tags-back" data-i18n="done">Done</button>
+    </header>
+
+    <div class="new-tag">
+      <input id="new-tag-icon" class="icon-input" placeholder="✨" maxlength="4" aria-label="Emoji">
+      <input id="new-tag-label" class="name-input" data-i18n-ph="newTag" placeholder="New tag" aria-label="Tag name">
+      <select id="new-tag-group" aria-label="Group">
+        <option value="life" data-i18n="groupLife">Life</option>
+        <option value="social" data-i18n="groupSocial">Social</option>
+        <option value="health" data-i18n="groupHealth">Health</option>
+        <option value="leisure" data-i18n="groupLeisure">Leisure</option>
+      </select>
+      <button class="ghost small primary-ghost" id="add-tag" data-i18n="add">Add</button>
+    </div>
+
+    <div id="tag-manage"></div>
+  </section>
+
+  <!-- ── Closet ──────────────────────────────────────────────── -->
+  <section class="screen" id="screen-closet" data-screen="closet" hidden>
+    <header class="topbar">
+      <h1 data-i18n="closet">Closet</h1>
+      <p class="date" id="closet-progress"></p>
+    </header>
+    <div class="stage stage-sm">
+      <div class="char" id="char-closet"></div>
+    </div>
+    <div class="slot">
+      <h2 data-i18n="character">Character</h2>
+      <div class="grid char-grid" id="char-picker"></div>
+    </div>
+    <div id="slots"></div>
+  </section>
+
+</main>
+
+<nav class="tabs" id="tabs">
+  <button data-goto="today" class="active"><span>✎</span><i data-i18n="today">Today</i></button>
+  <button data-goto="history"><span>▦</span><i data-i18n="history">History</i></button>
+  <button data-goto="closet"><span>✿</span><i data-i18n="closet">Closet</i></button>
+</nav>
+
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

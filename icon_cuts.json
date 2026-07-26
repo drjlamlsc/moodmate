@@ -1,0 +1,73 @@
+{
+  "_comment": "Icon-only cleanup. Boxes are [x0, y0, x1, y1] in master (1024px) coordinates and affect items/icon_<name>.png only — worn layers are never touched. mode 'identical' (default) erases only pixels matching base_char_master, so the box can be generous and the garment is safe; use it for base showing through, like a neck inside a collar. mode 'all' erases everything in the box, needed when the debris was drawn rather than shown through; keep those tight, they will cut garment if oversized. mode 'under_fill' keeps the item's own silhouette and erases whatever hangs below it, following the shape column by column — for hats, where a brim curve can't be separated from the hair by any rectangle.",
+  "sweater": [
+    {
+      "box": [
+        415,
+        470,
+        555,
+        528
+      ],
+      "mode": "identical"
+    },
+    {
+      "box": [
+        442,
+        478,
+        502,
+        511
+      ],
+      "mode": "all"
+    }
+  ],
+  "sailor": [
+    {
+      "box": [
+        566,
+        495,
+        626,
+        572
+      ],
+      "mode": "identical"
+    },
+    {
+      "box": [
+        594,
+        498,
+        624,
+        550
+      ],
+      "mode": "all"
+    }
+  ],
+  "male_cap": [
+    {
+      "box": [
+        280,
+        272,
+        740,
+        470
+      ],
+      "mode": "lighter",
+      "level": 145
+    },
+    {
+      "box": [
+        280,
+        316,
+        740,
+        470
+      ],
+      "mode": "all"
+    },
+    {
+      "box": [
+        280,
+        286,
+        420,
+        470
+      ],
+      "mode": "all"
+    }
+  ]
+}
