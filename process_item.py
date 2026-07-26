@@ -302,19 +302,20 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
     if mask.sum() < 500:
         sys.exit("FAIL: extracted item is only %d px. Check the render." % mask.sum())
 
-    out = T.copy()
-    out[..., 3] = np.where(mask, T[..., 3], 0)
-    out = out.astype("uint8")
-    layer = Image.fromarray(out)
-    layer.save(os.path.join(here, "items", "item_%s.png" % name))
-
-    # The icon gets cleanup the worn layer doesn't need. Debris fused to the
-    # garment — a neck inside a collar, hair beside a shoulder, a stray corner
-    # the model drew — is invisible once worn but obvious on a closet card, and
-    # can't be identified automatically (see above). icon_cuts.json names those
-    # boxes by hand and they erase everything inside, since the debris isn't
-    # always base-coloured: draw them tight and check the icon afterwards.
+    # The icon gets cleanup the worn layer usually doesn't need. Debris fused to
+    # the garment — a neck inside a collar, hair beside a shoulder, a stray
+    # corner the model drew — is invisible once worn but obvious on a closet
+    # card, and can't be identified automatically (see above). icon_cuts.json
+    # names those boxes by hand and they erase everything inside, since the
+    # debris isn't always base-coloured: draw them tight and check afterwards.
+    #
+    # "target": "both" also cuts the worn layer. Needed when debris is only
+    # hidden by the character it was extracted from: the sailor blouse carries a
+    # white chip off its left shoulder that the girl's long hair covers
+    # completely and the boy's short hair does not. Default stays "icon",
+    # because cutting the worn layer is destructive and shared by both bodies.
     icon_mask = mask.copy()
+    cut_layer = False
     cuts_path = os.path.join(here, "icon_cuts.json")
     if os.path.exists(cuts_path):
         with open(cuts_path) as f:
@@ -350,7 +351,12 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
                     cut_from = min(h, col.max() + 1 + UNDER_FILL_PAD)
                     gone[cut_from:, x] |= icon_mask[cut_from:, x]
             icon_mask &= ~gone
-            print("icon cut %s %s removed %dpx" % (mode, cut["box"], int(gone.sum())))
+            where = cut.get("target", "icon")
+            if where == "both":
+                mask &= ~gone
+                cut_layer = True
+            print("%s cut %s %s removed %dpx"
+                  % (where, mode, cut["box"], int(gone.sum())))
 
     # Cuts can leave the debris's own outline behind as loose specks; drop any
     # piece that is now disconnected from the item's body.
@@ -360,6 +366,22 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
         for cid, n in icomps[1:]:
             if n < biggest * 0.15:
                 icon_mask &= ~(ilab == cid)
+
+    # Written here, after the cuts, so a "both" cut reaches the worn layer. The
+    # stranded-speck sweep runs only if such a cut actually fired: applied
+    # unconditionally it deleted the flower crown's separate blossoms, which are
+    # detached by design and 2706px of a legitimate item.
+    if cut_layer:
+        llab, lcomps = components(mask)
+        if lcomps:
+            biggest = lcomps[0][1]
+            for cid, n in lcomps[1:]:
+                if n < biggest * 0.15:
+                    mask &= ~(llab == cid)
+    out = T.copy()
+    out[..., 3] = np.where(mask, T[..., 3], 0)
+    layer = Image.fromarray(out.astype("uint8"))
+    layer.save(os.path.join(here, "items", "item_%s.png" % name))
 
     icon_rgba = T.copy()
     icon_rgba[..., 3] = np.where(icon_mask, T[..., 3], 0)

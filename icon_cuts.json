@@ -22,6 +22,17 @@
   ],
   "sailor": [
     {
+      "_note": "White chip off the left shoulder. The real shoulder starts at y=532 (the right one starts at 532 too, and has nothing above it), so everything above 540 out at x>=581 is debris. Cut from the worn layer as well: the girl's hair hides it, the boy's does not.",
+      "box": [
+        581,
+        505,
+        620,
+        540
+      ],
+      "mode": "all",
+      "target": "both"
+    },
+    {
       "box": [
         566,
         495,
