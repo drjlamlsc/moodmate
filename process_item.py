@@ -476,7 +476,15 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
 # still need an override; what matters is whether any *fill* falls below the
 # threshold, not how dark the garment is overall. 55 sits clear of the real line
 # art, whose median is 29.
-DARK_OVERRIDES = {"male_gakuran": 55, "sailor": 55}
+#
+# The navy tie is the same failure a third time: median 59, kept 43%, and the
+# figure only 23.2% below the threshold so the loop stays quiet. Three items in,
+# the pattern is clear enough to check for rather than wait for: measure what
+# share of each render's *coloured* dark area (dark, but too chromatic to be
+# ink) survives into the layer. Auditing all 21 that way found these three and
+# nothing else — the rest of the low scores are shading that falls on the
+# character, such as hair under a brim, and is excluded correctly.
+DARK_OVERRIDES = {"male_gakuran": 55, "sailor": 55, "male_tie_shirt": 55}
 
 
 if __name__ == "__main__":
