@@ -110,7 +110,7 @@
       "icon": "icon_headphones.png",
       "layer": {
         "girl": "item_headphones.png",
-        "boy": "item_headphones.png"
+        "boy": "item_headphones_male.png"
       },
       "fits": [
         "boy",
