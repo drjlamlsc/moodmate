@@ -206,7 +206,7 @@
       "icon": "icon_turtleneck.png",
       "layer": {
         "girl": "item_turtleneck.png",
-        "boy": "item_turtleneck.png"
+        "boy": "item_turtleneck_male.png"
       },
       "fits": [
         "boy",
