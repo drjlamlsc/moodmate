@@ -358,6 +358,54 @@
       ]
     },
     {
+      "id": "cargo_pants",
+      "slot": "bottom",
+      "label": "Cargo Pants",
+      "label_zh": "\u5de5\u88dd\u8932",
+      "unlockAt": 0,
+      "icon": "icon_cargo_pants.png",
+      "layer": {
+        "girl": "item_cargo_pants.png",
+        "boy": "item_cargo_pants.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "chino_shorts",
+      "slot": "bottom",
+      "label": "Chino Shorts",
+      "label_zh": "\u5361\u5176\u77ed\u8932",
+      "unlockAt": 0,
+      "icon": "icon_chino_shorts.png",
+      "layer": {
+        "girl": "item_chino_shorts.png",
+        "boy": "item_chino_shorts.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "pyjama_pants",
+      "slot": "bottom",
+      "label": "Pyjama Pants",
+      "label_zh": "\u7761\u8932",
+      "unlockAt": 0,
+      "icon": "icon_pyjama_pants.png",
+      "layer": {
+        "girl": "item_pyjama_pants.png",
+        "boy": "item_pyjama_pants.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
       "id": "male_cap",
       "slot": "hat",
       "label": "Baseball Cap",
@@ -471,5 +519,5 @@
       "color": "#3ea56a"
     }
   ],
-  "build": "7d8592f5fe"
+  "build": "23f5d56dc2"
 }
