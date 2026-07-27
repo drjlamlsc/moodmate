@@ -17,6 +17,19 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/appicon-192.png">
 <link rel="stylesheet" href="styles.css">
+<script>
+  /* Runs before first paint, so a chosen theme doesn't arrive a frame late as
+     a white flash. app.js reads the same key and owns it from there. */
+  /* Wrapped in an IIFE, not left at top level. This shares a global scope with
+     app.js, so a bare `var theme` here collides with any top-level binding of
+     the same name there and stops the whole file parsing. */
+  (function () {
+    try {
+      var saved = (JSON.parse(localStorage.getItem("moodmate.v1") || "{}") || {}).theme;
+      if (saved === "light" || saved === "dark") document.documentElement.dataset.theme = saved;
+    } catch (e) {}
+  })();
+</script>
 </head>
 <body>
 
@@ -33,6 +46,7 @@
         </div>
       </div>
       <div class="header-right">
+        <button class="theme-btn" id="theme-toggle" type="button" aria-label="Theme">☾</button>
         <div class="seg" id="lang-toggle">
           <button data-lang="en">EN</button><button data-lang="zh" class="on">中</button>
         </div>

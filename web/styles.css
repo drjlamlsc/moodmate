@@ -10,17 +10,53 @@
   --tabbar: 64px;
 }
 
+/* Dark is applied two ways and the palette is written once, as --dark-*.
+   Repeating the literals in both blocks is how they drift apart.
+
+   With no explicit choice the system decides, so the app matches the phone on
+   first run. Choosing a theme sets data-theme on <html>, and that has to win
+   in both directions: :not([data-theme="light"]) is what lets someone pick
+   light while their phone is in dark mode. */
+:root {
+  --dark-bg: #1b1720;
+  --dark-card: #251f2c;
+  --dark-ink: #ece7f2;
+  --dark-muted: #9e93ad;
+  --dark-line: #332b3c;
+  --dark-accent: #b9a3d6;
+  --dark-accent-soft: #322a3c;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1b1720;
-    --card: #251f2c;
-    --ink: #ece7f2;
-    --muted: #9e93ad;
-    --line: #332b3c;
-    --accent: #b9a3d6;
-    --accent-soft: #322a3c;
+  :root:not([data-theme="light"]) {
+    --bg: var(--dark-bg);
+    --card: var(--dark-card);
+    --ink: var(--dark-ink);
+    --muted: var(--dark-muted);
+    --line: var(--dark-line);
+    --accent: var(--dark-accent);
+    --accent-soft: var(--dark-accent-soft);
   }
 }
+
+:root[data-theme="dark"] {
+  --bg: var(--dark-bg);
+  --card: var(--dark-card);
+  --ink: var(--dark-ink);
+  --muted: var(--dark-muted);
+  --line: var(--dark-line);
+  --accent: var(--dark-accent);
+  --accent-soft: var(--dark-accent-soft);
+}
+
+.theme-btn {
+  display: grid; place-items: center;
+  width: 32px; height: 32px; padding: 0;
+  border: 1px solid var(--line); border-radius: 999px;
+  background: var(--card); color: var(--muted);
+  font: inherit; font-size: 14px; line-height: 1; cursor: pointer;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); }
 
 * { box-sizing: border-box; }
 

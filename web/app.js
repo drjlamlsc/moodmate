@@ -50,6 +50,7 @@ const state = {
   // "en" | "zh". Chinese is the default for a first run; a stored preference
   // always wins, so anyone who has picked EN keeps it.
   lang: "zh",
+  theme: null,                                   // null = follow the system
   character: "girl",                             // which body is worn
   entries: {},                                   // "YYYY-MM-DD" -> {mood, note, tags}
   tags: [],                                      // {id, label, icon, group, order, archived}
@@ -92,6 +93,7 @@ function load() {
       : { hat: null, top: "hoodie", bottom: null };
     state.tags = Array.isArray(raw.tags) && raw.tags.length ? raw.tags : seedTags();
     if (raw.lang === "en" || raw.lang === "zh") state.lang = raw.lang;
+    if (raw.theme === "light" || raw.theme === "dark") state.theme = raw.theme;
     if (raw.character) state.character = raw.character;
 
     // Migration to schema 2. Entries written before tags existed simply have
@@ -114,7 +116,8 @@ function load() {
 
 function save() {
   localStorage.setItem(STORE, JSON.stringify({
-    version: SCHEMA, lang: state.lang, character: state.character, entries: state.entries,
+    version: SCHEMA, lang: state.lang, theme: state.theme,
+    character: state.character, entries: state.entries,
     tags: state.tags, outfit: state.outfit,
   }));
 }
@@ -233,6 +236,33 @@ async function sweepPhotos() {
       if (!used.has(id)) await photoDel(id);
     }
   } catch { /* a failed sweep costs space, never correctness */ }
+}
+
+/* ── theme ───────────────────────────────────────────────────────
+   state.theme is null until the user chooses, so a first run follows the
+   phone. After that the choice is explicit and sticks, including the case of
+   wanting light while the system is dark. */
+
+const systemDark = () => window.matchMedia("(prefers-color-scheme: dark)").matches;
+const effectiveTheme = () => state.theme || (systemDark() ? "dark" : "light");
+
+function applyTheme() {
+  const dark = effectiveTheme() === "dark";
+  // Absent means "follow the system"; the media query handles it from there.
+  if (state.theme) document.documentElement.dataset.theme = state.theme;
+  else delete document.documentElement.dataset.theme;
+  // The iOS status bar reads this, so leaving it stale puts a pale bar above
+  // a dark app.
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", dark ? "#1b1720" : "#f5eefa");
+  const btn = document.getElementById("theme-toggle");
+  if (btn) btn.textContent = dark ? "☀" : "☾";   // what tapping switches to
+}
+
+function toggleTheme() {
+  state.theme = effectiveTheme() === "dark" ? "light" : "dark";
+  save();
+  applyTheme();
 }
 
 /* ── language ────────────────────────────────────────────────── */
@@ -1357,6 +1387,12 @@ async function init() {
     if (e.key === "Enter") addTag();
   };
 
+  document.getElementById("theme-toggle").onclick = toggleTheme;
+  // Only fires while state.theme is null, i.e. while we're following along.
+  window.matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", () => { if (!state.theme) applyTheme(); });
+
+  applyTheme();
   setLang(state.lang);        // paints static strings and the toggle state
   goto("today");
   sweepPhotos();              // after the first paint; nothing waits on it
