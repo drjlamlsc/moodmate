@@ -12,7 +12,7 @@ was extracted against. The app never needs that: the character renders at a
 few hundred CSS pixels, so shipping 1024px costs load time for nothing.
 Layers are downscaled together, by the same factor, so they stay aligned.
 """
-import json, os, shutil
+import json, os, shutil, hashlib, re
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -92,6 +92,43 @@ def save(img, path, px):
     im.thumbnail((px, px), Image.LANCZOS)
     im.save(path, optimize=True)
     return im.size
+
+
+def stamp_service_worker():
+    """Key the service worker's cache to the content it will cache.
+
+    The image rule in sw.js is cache-first, and item art is replaced under an
+    unchanged filename every time a render is improved — item_jeans.png has
+    been three different drawings. With a fixed cache name nothing ever
+    invalidates that, so anyone who has opened the app keeps the old art
+    indefinitely, while a fresh visitor sees the new one. Hashing the built
+    assets means the cache name moves whenever any of them does, and the
+    activate handler already deletes every cache but the current one.
+    """
+    sw = os.path.join(HERE, "web", "sw.js")
+    h = hashlib.sha1()
+    for root, _, files in sorted(os.walk(OUT)):
+        for f in sorted(files):
+            with open(os.path.join(root, f), "rb") as fh:
+                h.update(f.encode())
+                h.update(fh.read())
+    for shell in ("index.html", "app.js", "i18n.js", "styles.css"):
+        p = os.path.join(HERE, "web", shell)
+        if os.path.exists(p):
+            with open(p, "rb") as fh:
+                h.update(fh.read())
+    build = h.hexdigest()[:10]
+
+    if os.path.exists(sw):
+        with open(sw) as f:
+            src = f.read()
+        new = re.sub(r'const CACHE = "moodmate-[^"]*";',
+                     'const CACHE = "moodmate-%s";' % build, src)
+        if new != src:
+            with open(sw, "w") as f:
+                f.write(new)
+    print("build stamp: %s" % build)
+    return build
 
 
 def main():
@@ -179,6 +216,11 @@ def main():
         h.thumbnail((int(px * 0.86), int(px * 0.86)), Image.LANCZOS)
         plate.paste(h, ((px - h.width) // 2, (px - h.height) // 2), h)
         plate.convert("RGB").save(os.path.join(OUT, "appicon-%d.png" % px), optimize=True)
+
+    # Written before the manifest so the stamp can go into it: the app appends
+    # it to every asset URL, which is what defeats the browser's HTTP cache.
+    # The service worker's own cache name uses the same value.
+    manifest["build"] = stamp_service_worker()
 
     with open(os.path.join(OUT, "items.json"), "w") as f:
         json.dump(manifest, f, indent=2)

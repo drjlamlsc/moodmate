@@ -2,7 +2,10 @@
    as they're first requested, so adding wardrobe items doesn't mean editing
    a hardcoded file list here. */
 
-const CACHE = "moodmate-v1";
+// Stamped by export_web.py from a hash of the built assets. It must change
+// whenever any asset does, because the image rule below is cache-first and a
+// cache keyed by a constant name is never invalidated.
+const CACHE = "moodmate-8ee07dd5ac";
 const SHELL = [
   ".", "index.html", "styles.css", "app.js",
   "manifest.webmanifest", "assets/items.json",
@@ -49,8 +52,10 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // Images: cache first. They're content-addressed by filename and never
-  // change in place, so there's nothing to invalidate.
+  // Images: cache first. They are NOT content-addressed — an item's art gets
+  // replaced under the same filename every time a render is improved — so what
+  // invalidates them is the build-stamped cache name above, which drops the
+  // whole old cache on activate.
   e.respondWith(
     caches.match(e.request).then((hit) => hit ||
       fetch(e.request).then((res) => remember(e.request, res)))

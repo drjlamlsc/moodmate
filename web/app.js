@@ -267,6 +267,17 @@ function toggleTheme() {
 
 /* ── language ────────────────────────────────────────────────── */
 
+/* Asset URLs carry the build stamp from the manifest. Item art is replaced
+   under an unchanged filename whenever a render is improved — item_jeans.png
+   has been three different drawings — so a bare filename is stale-able at two
+   independent layers: the service worker's cache and the browser's own HTTP
+   cache. Clearing one still leaves the other. A URL that changes with the
+   content is a new URL to both of them, which is the only fix that covers
+   both. items.json itself is fetched with cache:"no-cache", so the current
+   stamp is always discovered. */
+const asset = (f) => ASSETS + f + (state.manifest && state.manifest.build
+                                   ? "?v=" + state.manifest.build : "");
+
 const t = (k) => (STRINGS[k] ? STRINGS[k][state.lang] || STRINGS[k].en : k);
 const locale = () => LOCALE[state.lang];
 
@@ -440,7 +451,7 @@ function renderChar(el, mood, outfit, character) {
   el.innerHTML = "";
   for (const l of layersFor(mood, outfit, character)) {
     const img = new Image();
-    img.src = ASSETS + l.src;
+    img.src = asset(l.src);
     img.alt = "";
     el.appendChild(img);
   }
@@ -454,7 +465,7 @@ function headChip(mood, tight, character) {
   wrap.className = "head" + (tight ? " tight" : "");
   for (const l of layersFor(mood, { hat: null, top: null, bottom: null }, character)) {
     const img = new Image();
-    img.src = ASSETS + l.src;
+    img.src = asset(l.src);
     img.alt = "";
     wrap.appendChild(img);
   }
@@ -1227,7 +1238,7 @@ function renderCloset() {
       fig.className = "head";
       for (const l of layersFor("meh", { hat: null, top: null, bottom: null }, c.id)) {
         const img = new Image();
-        img.src = ASSETS + l.src;
+        img.src = asset(l.src);
         img.alt = "";
         fig.appendChild(img);
       }
@@ -1270,7 +1281,7 @@ function renderCloset() {
       card.className = "card" + (locked ? " locked" : "");
       card.setAttribute("aria-pressed", String(state.outfit[slot] === it.id));
       const img = new Image();
-      img.src = ASSETS + it.icon;
+      img.src = asset(it.icon);
       img.alt = nameOf(it);
       const name = document.createElement("span");
       name.className = "name";
@@ -1398,7 +1409,11 @@ async function init() {
   sweepPhotos();              // after the first paint; nothing waits on it
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+    // updateViaCache:"none" keeps sw.js itself out of the HTTP cache. The
+    // worker is what decides whether everything else is stale, so serving a
+    // stale copy of it means a deploy can never take effect — the one file
+    // that must always come from the network.
+    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).catch(() => {});
   }
 }
 
