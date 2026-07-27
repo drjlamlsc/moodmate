@@ -22,6 +22,10 @@ const STRINGS = {
                       zh: "仲未有記錄 — 不如由今日開始。" },
   closePhoto:       { en: "Close",            zh: "關閉" },
 
+  pullToRefresh:    { en: "Pull to refresh",  zh: "下拉更新" },
+  releaseToRefresh: { en: "Release to refresh", zh: "放開即更新" },
+  refreshing:       { en: "Updating…",        zh: "更新中…" },
+
   noteLabel:        { en: "Anything you want to remember?", zh: "有什麼想記低嗎？" },
   notePlaceholder:  { en: "today I…",         zh: "今日我…" },
   tagsLabel:        { en: "What did you get up to?", zh: "今日做咗啲乜？" },

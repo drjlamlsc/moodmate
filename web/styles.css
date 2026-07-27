@@ -540,3 +540,23 @@ textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
   border-radius: 8px; border: 1px solid var(--line); background: var(--line);
 }
 .empty { color: var(--muted); font-size: 14px; text-align: center; padding: 40px 0; }
+
+/* ── pull to refresh ──────────────────────────────────────────────
+   An installed PWA has no browser chrome, so there is no reload button and
+   Safari's own pull-to-refresh is absent in standalone mode. Without this a
+   stale asset has no user-reachable remedy short of deleting the app. */
+.pull {
+  position: fixed; left: 0; right: 0; top: 0; z-index: 60;
+  display: flex; align-items: flex-end; justify-content: center;
+  height: 64px; padding-bottom: 8px;
+  font-size: 12.5px; font-weight: 700; color: var(--accent);
+  background: linear-gradient(var(--bg) 60%, transparent);
+  /* Hidden above the top edge until a drag pulls it in. */
+  transform: translateY(-100%);
+  pointer-events: none;
+  opacity: 0;
+}
+.pull.armed { opacity: 1; }
+.pull.snap { transition: transform .25s ease, opacity .25s ease; }
+.pull.busy { transform: translateY(0); opacity: 1; }
+#app.snap { transition: transform .25s ease; }

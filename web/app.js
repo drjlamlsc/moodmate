@@ -238,6 +238,95 @@ async function sweepPhotos() {
   } catch { /* a failed sweep costs space, never correctness */ }
 }
 
+/* ── pull to refresh ─────────────────────────────────────────────
+   An installed PWA has no address bar, no reload button, and no Safari
+   pull-to-refresh — that gesture only exists in the browser. So when an asset
+   does go stale there is nothing the user can do about it short of deleting
+   and reinstalling the app. This is that missing control. */
+
+const PULL_TRIGGER = 70;    // px of travel before the gesture arms
+const PULL_MAX = 110;       // further than this the indicator stops following
+let pullY = 0, pullFrom = null, pulling = false;
+
+function pullEl() { return document.getElementById("pull"); }
+
+function setPull(px, armed) {
+  const el = pullEl();
+  el.classList.remove("snap");
+  el.style.transform = "translateY(" + (px - 64) + "px)";
+  el.classList.toggle("armed", px > 6);
+  // The page follows the finger too. Without this the indicator slides over a
+  // stationary header and reads as a stray label rather than a drag.
+  const app = document.getElementById("app");
+  app.classList.remove("snap");
+  app.style.transform = "translateY(" + px + "px)";
+  document.getElementById("pull-text").textContent =
+    t(armed ? "releaseToRefresh" : "pullToRefresh");
+}
+
+function resetPull() {
+  const el = pullEl(), app = document.getElementById("app");
+  el.classList.add("snap");
+  el.style.transform = "";
+  el.classList.remove("armed");
+  app.classList.add("snap");
+  app.style.transform = "";
+  pullY = 0; pullFrom = null; pulling = false;
+}
+
+/* Everything cached is dropped, then the page is reloaded. Destructive to the
+   offline copy, which is why it is only ever a deliberate gesture: the next
+   load refills it from the network. */
+async function refreshAssets() {
+  const el = pullEl(), app = document.getElementById("app");
+  el.classList.remove("snap", "armed");
+  el.classList.add("busy");
+  el.style.transform = "";
+  app.classList.add("snap");
+  app.style.transform = "translateY(64px)";   // hold under the spinner
+  document.getElementById("pull-text").textContent = t("refreshing");
+  try {
+    for (const k of await caches.keys()) await caches.delete(k);
+    const regs = await navigator.serviceWorker.getRegistrations();
+    // Unregister rather than update(): update() can leave the old worker
+    // controlling this page, which is the state we are trying to escape.
+    for (const r of regs) await r.unregister();
+  } catch { /* refuse to get stuck on the indicator if any of it fails */ }
+  location.reload();
+}
+
+function initPull() {
+  const scrolled = () => window.scrollY || document.documentElement.scrollTop || 0;
+
+  addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 1 || scrolled() > 0 || state.lightbox) return;
+    pullFrom = e.touches[0].clientY;
+    pulling = false;
+  }, { passive: true });
+
+  addEventListener("touchmove", (e) => {
+    if (pullFrom === null || e.touches.length !== 1) return;
+    const dy = e.touches[0].clientY - pullFrom;
+    // An upward move, or any scroll away from the top, hands the gesture back
+    // to the page — this must never fight normal scrolling.
+    if (dy <= 0 || scrolled() > 0) { if (pulling) resetPull(); pullFrom = null; return; }
+    pulling = true;
+    // Resistance: the indicator moves a fraction of the finger, so the pull
+    // feels weighted and can't be triggered by an idle flick.
+    pullY = Math.min(PULL_MAX, dy * 0.45);
+    setPull(pullY, pullY >= PULL_TRIGGER);
+    e.preventDefault();          // suppress the rubber-band while pulling
+  }, { passive: false });
+
+  addEventListener("touchend", () => {
+    if (!pulling) { pullFrom = null; return; }
+    if (pullY >= PULL_TRIGGER) refreshAssets();
+    else resetPull();
+  }, { passive: true });
+
+  addEventListener("touchcancel", resetPull, { passive: true });
+}
+
 /* ── theme ───────────────────────────────────────────────────────
    state.theme is null until the user chooses, so a first run follows the
    phone. After that the choice is explicit and sticks, including the case of
@@ -1356,6 +1445,17 @@ async function init() {
   // offline-safe: the service worker answers when the network can't.
   state.manifest = await (await fetch(ASSETS + "items.json", { cache: "no-cache" })).json();
 
+  // The page has just read the current build. If a cache is keyed to a
+  // different one, drop it — without waiting for the service worker to notice.
+  // That wait is exactly what failed on iOS: the shell is network-first, so
+  // new code arrived and dark mode and photos worked, while the old worker
+  // kept serving old images from a cache it had no reason to invalidate.
+  if (state.manifest.build && window.caches) {
+    const want = "moodmate-" + state.manifest.build;
+    caches.keys().then((ks) => ks.forEach((k) => { if (k !== want) caches.delete(k); }))
+                 .catch(() => {});
+  }
+
   state.entryDate = todayKey();
   document.getElementById("save").onclick = saveToday;
   document.getElementById("delete-today").onclick = () => {
@@ -1404,6 +1504,7 @@ async function init() {
         .addEventListener("change", () => { if (!state.theme) applyTheme(); });
 
   applyTheme();
+  initPull();
   setLang(state.lang);        // paints static strings and the toggle state
   goto("today");
   sweepPhotos();              // after the first paint; nothing waits on it

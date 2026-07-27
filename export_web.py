@@ -127,6 +127,22 @@ def stamp_service_worker():
         if new != src:
             with open(sw, "w") as f:
                 f.write(new)
+
+    # The shell needs stamping too. Asset URLs are versioned from the manifest,
+    # but styles.css and app.js are referenced by index.html, and a stale copy
+    # of those arrives through the browser's HTTP cache without the service
+    # worker being involved at all — which is how new markup can end up styled
+    # by an old stylesheet.
+    idx = os.path.join(HERE, "web", "index.html")
+    if os.path.exists(idx):
+        with open(idx) as f:
+            src = f.read()
+        new = re.sub(r'((?:href|src)="(?:styles\.css|app\.js|i18n\.js))(?:\?v=[^"]*)?"',
+                     lambda m: '%s?v=%s"' % (m.group(1), build), src)
+        if new != src:
+            with open(idx, "w") as f:
+                f.write(new)
+
     print("build stamp: %s" % build)
     return build
 
