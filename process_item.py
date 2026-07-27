@@ -466,7 +466,17 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
 # recoverable from the output: reprocessing the navy gakuran without it silently
 # yields 26863px instead of 44606px — a valid-looking layer missing a third of
 # the jacket.
-DARK_OVERRIDES = {"male_gakuran": 55}
+#
+# The sailor blouse is the subtler case, and it shipped broken for weeks. Only
+# part of it is dark: the navy collar sits at luminance 73 and the red
+# neckerchief at 113, both under DARK's 115, so both were read as line art
+# rather than fill and 96% of the collar was dropped. The self-tuning loop never
+# fires because they are small next to the whole figure — 24.5% of it, under the
+# 30% that would trip DARK_SHARE. A garment can therefore be mostly light and
+# still need an override; what matters is whether any *fill* falls below the
+# threshold, not how dark the garment is overall. 55 sits clear of the real line
+# art, whose median is 29.
+DARK_OVERRIDES = {"male_gakuran": 55, "sailor": 55}
 
 
 if __name__ == "__main__":
