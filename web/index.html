@@ -51,6 +51,10 @@
     <label class="note-label" for="note" data-i18n="noteLabel">有什麼想記低嗎？</label>
     <textarea id="note" rows="3" data-i18n-ph="notePlaceholder" placeholder="今日我…"></textarea>
 
+    <p class="note-label spaced" data-i18n="photos">相片</p>
+    <div class="photo-row" id="photos-today"></div>
+    <input type="file" id="photo-input" accept="image/*" multiple hidden>
+
     <p class="note-label spaced" data-i18n="tagsLabel">今日做咗啲乜？</p>
     <div id="tags-today"></div>
 
@@ -67,7 +71,7 @@
   <!-- ── History ─────────────────────────────────────────────── -->
   <section class="screen" id="screen-history" data-screen="history" hidden>
     <header class="topbar">
-      <h1 data-i18n="history">記錄</h1>
+      <h1 data-i18n="history">月曆</h1>
       <div class="month-nav">
         <button id="prev-month" aria-label="Previous month">‹</button>
         <span id="month-label"></span>
@@ -80,6 +84,14 @@
     <div class="entry-detail" id="entry-detail" hidden></div>
     <div class="stats" id="stats"></div>
     <section class="tag-stats" id="tag-stats" hidden></section>
+  </section>
+
+  <!-- ── Entry list ──────────────────────────────────────────── -->
+  <section class="screen" id="screen-list" data-screen="list" hidden>
+    <header class="topbar">
+      <h1 data-i18n="entryList">記錄</h1>
+    </header>
+    <div id="entry-list"></div>
   </section>
 
   <!-- ── Manage tags ─────────────────────────────────────────── -->
@@ -127,9 +139,12 @@
 
 <nav class="tabs" id="tabs">
   <button data-goto="today" class="active"><span>✎</span><i data-i18n="today">今日</i></button>
-  <button data-goto="history"><span>▦</span><i data-i18n="history">記錄</i></button>
+  <button data-goto="list"><span>☰</span><i data-i18n="entryList">記錄</i></button>
+  <button data-goto="history"><span>▦</span><i data-i18n="history">月曆</i></button>
   <button data-goto="closet"><span>✿</span><i data-i18n="closet">衣櫥</i></button>
 </nav>
+
+<div class="lightbox" id="lightbox" hidden></div>
 
 <script src="i18n.js"></script>
 <script src="app.js"></script>

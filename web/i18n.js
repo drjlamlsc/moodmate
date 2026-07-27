@@ -7,9 +7,20 @@
 
 const STRINGS = {
   today:            { en: "Today",            zh: "今日" },
-  history:          { en: "History",          zh: "記錄" },
+  // The calendar and the list are both "history"; naming one of them History
+  // would make the other look like something else. Say what each one shows.
+  history:          { en: "Calendar",         zh: "月曆" },
+  entryList:        { en: "Entries",          zh: "記錄" },
   closet:           { en: "Closet",           zh: "衣櫥" },
   tags:             { en: "Tags",             zh: "標籤" },
+
+  photos:           { en: "Photos",           zh: "相片" },
+  addPhoto:         { en: "Add photo",        zh: "加相片" },
+  photoLimit:       { en: "Up to 3",          zh: "最多 3 張" },
+  removePhoto:      { en: "Remove photo",     zh: "移除相片" },
+  noEntries:        { en: "No entries yet — today is a good place to start.",
+                      zh: "仲未有記錄 — 不如由今日開始。" },
+  closePhoto:       { en: "Close",            zh: "關閉" },
 
   noteLabel:        { en: "Anything you want to remember?", zh: "有什麼想記低嗎？" },
   notePlaceholder:  { en: "today I…",         zh: "今日我…" },

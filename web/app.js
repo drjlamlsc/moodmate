@@ -4,7 +4,13 @@
 
 const STORE = "moodmate.v1";
 const ASSETS = "assets/";
-const SCHEMA = 2;              // 1 = mood + note, 2 = adds activity tags
+const SCHEMA = 3;              // 1 = mood + note, 2 = adds activity tags,
+                               // 3 = adds photos
+const MAX_PHOTOS = 3;
+const FULL_PX = 1600;          // stored longest edge, for the lightbox
+const THUMB_PX = 400;          // stored longest edge, for lists
+const FULL_Q = 0.82;
+const THUMB_Q = 0.7;
 const MIN_SAMPLE = 5;          // fewer entries than this and a stat is noise
 const QUICK_TAGS = 10;         // tags shown before "More"
 
@@ -52,6 +58,8 @@ const state = {
   entryDate: null,                               // which day the entry screen edits
   draftMood: null,
   draftTags: null,
+  draftPhotos: null,                             // photo ids on the open entry
+  lightbox: null,                                // {ids, i} while a photo is open
   viewMonth: null,                               // Date, first of the shown month
   selectedDay: null,
   editing: null,                                 // date key currently being edited
@@ -89,9 +97,10 @@ function load() {
     // Migration to schema 2. Entries written before tags existed simply have
     // none; give them an empty array so nothing downstream has to special-case
     // a missing field. Runs once and is invisible.
-    if (!raw.version || raw.version < 2) {
+    if (!raw.version || raw.version < 3) {
       for (const e of Object.values(state.entries)) {
-        if (!Array.isArray(e.tags)) e.tags = [];
+        if (!Array.isArray(e.tags)) e.tags = [];       // schema 2: tags
+        if (!Array.isArray(e.photos)) e.photos = [];   // schema 3: photos
       }
       save();
     }
@@ -108,6 +117,122 @@ function save() {
     version: SCHEMA, lang: state.lang, character: state.character, entries: state.entries,
     tags: state.tags, outfit: state.outfit,
   }));
+}
+
+/* ── photos ──────────────────────────────────────────────────────
+   Photos live in IndexedDB, not in the entry. localStorage holds about 5MB
+   for the whole origin and stores strings, so a photo would have to be
+   base64 — a third larger again. One phone photo would take most of the
+   budget and three would exceed it, taking the journal text down with them.
+   IndexedDB stores Blobs natively and its quota is orders of magnitude
+   larger. The entry keeps only a list of ids.
+
+   Each photo is stored twice: a full copy for the lightbox and a thumbnail
+   for lists. A list of thirty entries would otherwise decode ninety
+   full-size images to draw them 60px wide. */
+
+const PHOTO_DB = "moodmate-photos";
+let photoDB = null;
+
+function openPhotoDB() {
+  if (photoDB) return Promise.resolve(photoDB);
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(PHOTO_DB, 1);
+    req.onupgradeneeded = () => {
+      if (!req.result.objectStoreNames.contains("photos")) {
+        req.result.createObjectStore("photos", { keyPath: "id" });
+      }
+    };
+    req.onsuccess = () => { photoDB = req.result; resolve(photoDB); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function photoTx(mode, fn) {
+  return openPhotoDB().then((db) => new Promise((resolve, reject) => {
+    const tx = db.transaction("photos", mode);
+    const req = fn(tx.objectStore("photos"));
+    tx.oncomplete = () => resolve(req && req.result);
+    tx.onerror = () => reject(tx.error);
+  }));
+}
+
+const photoPut = (rec) => photoTx("readwrite", (s) => s.put(rec));
+const photoGet = (id) => photoTx("readonly", (s) => s.get(id));
+const photoDel = (id) => photoTx("readwrite", (s) => s.delete(id));
+const photoKeys = () => photoTx("readonly", (s) => s.getAllKeys());
+
+// Object URLs are cached per id: a photo can appear on the list, the entry
+// and the lightbox at once, and minting a URL per <img> would leak one each
+// time the list re-renders. Revoked only when the photo itself is deleted.
+const photoURLs = new Map();
+
+async function photoURL(id, which) {
+  const k = id + ":" + which;
+  if (photoURLs.has(k)) return photoURLs.get(k);
+  const rec = await photoGet(id);
+  if (!rec || !rec[which]) return null;
+  const url = URL.createObjectURL(rec[which]);
+  photoURLs.set(k, url);
+  return url;
+}
+
+function forgetPhotoURL(id) {
+  for (const which of ["full", "thumb"]) {
+    const k = id + ":" + which;
+    if (photoURLs.has(k)) {
+      URL.revokeObjectURL(photoURLs.get(k));
+      photoURLs.delete(k);
+    }
+  }
+}
+
+// Downscale in a canvas before storing. Phone cameras produce 3-6MB files and
+// nothing here is ever shown larger than a phone screen, so keeping the
+// original would cost storage for detail that is never drawn.
+function scaleToBlob(img, maxPx, quality) {
+  const s = Math.min(1, maxPx / Math.max(img.width, img.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(img.width * s);
+  c.height = Math.round(img.height * s);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return new Promise((res) => c.toBlob(res, "image/jpeg", quality));
+}
+
+async function addPhotoFile(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => {
+      const i = new Image();
+      i.onload = () => res(i);
+      i.onerror = rej;
+      i.src = url;
+    });
+    const [full, thumb] = await Promise.all([
+      scaleToBlob(img, FULL_PX, FULL_Q),
+      scaleToBlob(img, THUMB_PX, THUMB_Q),
+    ]);
+    const id = "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    await photoPut({ id, full, thumb, ts: Date.now() });
+    return id;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+// A photo is only reachable through an entry, so anything no entry references
+// is dead weight — left behind by a delete that failed midway, or by removing
+// a photo from a draft that was never saved. Swept once at startup.
+async function sweepPhotos() {
+  try {
+    const used = new Set();
+    for (const e of Object.values(state.entries)) {
+      for (const id of e.photos || []) used.add(id);
+    }
+    for (const id of (await photoKeys()) || []) {
+      if (!used.has(id)) await photoDel(id);
+    }
+  } catch { /* a failed sweep costs space, never correctness */ }
 }
 
 /* ── language ────────────────────────────────────────────────── */
@@ -314,6 +439,7 @@ function renderToday() {
   const entry = state.entries[day];
   if (state.draftMood === null) state.draftMood = entry ? entry.mood : "meh";
   if (state.draftTags === null) state.draftTags = entry ? (entry.tags || []).slice() : [];
+  if (state.draftPhotos === null) state.draftPhotos = entry ? (entry.photos || []).slice() : [];
 
   document.getElementById("entry-title").textContent = isToday ? t("today") : prettyDate(day);
   const dateInput = document.getElementById("entry-date");
@@ -355,6 +481,7 @@ function renderToday() {
 
   const note = document.getElementById("note");
   if (document.activeElement !== note) note.value = entry ? entry.note || "" : "";
+  renderPhotoEditor();
   document.getElementById("save").textContent =
     t(entry ? "updateEntry" : (isToday ? "saveToday" : "saveEntry"));
 
@@ -363,10 +490,104 @@ function renderToday() {
   document.getElementById("confirm-delete").hidden = !asking;
 }
 
+function renderPhotoEditor() {
+  const row = document.getElementById("photos-today");
+  row.innerHTML = "";
+  const ids = state.draftPhotos || [];
+
+  for (const id of ids) {
+    const cell = document.createElement("div");
+    cell.className = "photo-cell";
+    const img = new Image();
+    img.alt = "";
+    photoURL(id, "thumb").then((u) => { if (u) img.src = u; });
+    img.onclick = () => openLightbox(ids, ids.indexOf(id));
+    const rm = document.createElement("button");
+    rm.className = "photo-remove";
+    rm.type = "button";
+    rm.textContent = "×";
+    rm.setAttribute("aria-label", t("removePhoto"));
+    // Dropped from the draft only. The file is swept at next startup if the
+    // entry is saved without it — deleting here would lose the photo for good
+    // if the edit is then abandoned.
+    rm.onclick = () => {
+      state.draftPhotos = ids.filter((x) => x !== id);
+      renderPhotoEditor();
+    };
+    cell.append(img, rm);
+    row.appendChild(cell);
+  }
+
+  if (ids.length < MAX_PHOTOS) {
+    const add = document.createElement("button");
+    add.className = "photo-add";
+    add.type = "button";
+    add.innerHTML = '<span aria-hidden="true">＋</span>';
+    const cap = document.createElement("i");
+    cap.textContent = ids.length ? t("photoLimit") : t("addPhoto");
+    add.appendChild(cap);
+    add.onclick = () => document.getElementById("photo-input").click();
+    row.appendChild(add);
+  }
+}
+
+async function onPhotoPicked(e) {
+  const files = Array.from(e.target.files || []);
+  e.target.value = "";                   // so re-picking the same file fires
+  const room = MAX_PHOTOS - (state.draftPhotos || []).length;
+  for (const f of files.slice(0, room)) {
+    try {
+      state.draftPhotos.push(await addPhotoFile(f));
+    } catch { /* an unreadable file is skipped, not fatal */ }
+    renderPhotoEditor();
+  }
+}
+
+function openLightbox(ids, i) {
+  state.lightbox = { ids: ids.slice(), i };
+  renderLightbox();
+}
+
+function renderLightbox() {
+  const box = document.getElementById("lightbox");
+  const lb = state.lightbox;
+  box.hidden = !lb;
+  box.innerHTML = "";
+  if (!lb) return;
+
+  const img = new Image();
+  img.className = "lightbox-img";
+  img.alt = "";
+  photoURL(lb.ids[lb.i], "full").then((u) => { if (u) img.src = u; });
+  box.appendChild(img);
+
+  if (lb.ids.length > 1) {
+    const dots = document.createElement("div");
+    dots.className = "lightbox-dots";
+    lb.ids.forEach((_, n) => {
+      const d = document.createElement("button");
+      d.className = "dot" + (n === lb.i ? " on" : "");
+      d.type = "button";
+      d.onclick = (ev) => { ev.stopPropagation(); state.lightbox.i = n; renderLightbox(); };
+      dots.appendChild(d);
+    });
+    box.appendChild(dots);
+  }
+
+  const close = document.createElement("button");
+  close.className = "lightbox-close";
+  close.type = "button";
+  close.textContent = "×";
+  close.setAttribute("aria-label", t("closePhoto"));
+  box.appendChild(close);
+  box.onclick = () => { state.lightbox = null; renderLightbox(); };
+}
+
 function setEntryDate(k) {
   state.entryDate = k;
-  state.draftMood = null;                // let the chosen day's own mood and
-  state.draftTags = null;                // tags load
+  state.draftMood = null;                // let the chosen day's own mood, tags
+  state.draftTags = null;                // and photos load
+  state.draftPhotos = null;
   document.getElementById("note").blur();
   renderToday();
 }
@@ -374,33 +595,143 @@ function setEntryDate(k) {
 function deleteToday() {
   const k = state.entryDate || todayKey();
   if (!state.entries[k]) return;
+  const gone = (state.entries[k].photos || []).slice();
   delete state.entries[k];
   save();
+  for (const id of gone) { forgetPhotoURL(id); photoDel(id).catch(() => {}); }
   state.draftMood = null;
   state.draftTags = null;
+  state.draftPhotos = null;
   state.confirmDelete = null;
   document.getElementById("note").value = "";
   renderToday();
   renderHistory();
+  renderList();
   renderCloset();
 }
 
 function saveToday() {
   const note = document.getElementById("note").value.trim();
   const day = state.entryDate || todayKey();
+  const dropped = ((state.entries[day] || {}).photos || [])
+    .filter((id) => !(state.draftPhotos || []).includes(id));
   state.entries[day] = {
     mood: state.draftMood, note, tags: (state.draftTags || []).slice(),
+    photos: (state.draftPhotos || []).slice(),
     // Snapshot, not a reference: changing clothes tomorrow must not restyle
     // what you wore today. This is what makes the history a record.
     outfit: Object.assign({}, state.outfit),
     character: state.character,
   };
   save();
+  // Only once the entry without them is committed, so a failure here leaves
+  // an orphan for the sweep rather than an entry pointing at a missing photo.
+  for (const id of dropped) { forgetPhotoURL(id); photoDel(id).catch(() => {}); }
   const hint = document.getElementById("saved-hint");
   hint.hidden = false;
   setTimeout(() => { hint.hidden = true; }, 1600);
   renderToday();
   renderCloset();
+}
+
+/* ── entry list ──────────────────────────────────────────────────
+   The calendar answers "what did this month look like"; this answers "what
+   actually happened". So it shows the things a grid has no room for: the
+   character in the outfit worn that day, the tags, and enough of the note to
+   recognise the entry. Tapping a row opens that day on Today, which is
+   already the full editor — there is one entry per day, so editing it is the
+   only thing a row can usefully do. */
+
+function renderList() {
+  const wrap = document.getElementById("entry-list");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+
+  const keys = Object.keys(state.entries).sort().reverse();
+  if (!keys.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty";
+    empty.textContent = t("noEntries");
+    wrap.appendChild(empty);
+    return;
+  }
+
+  let month = null;
+  for (const k of keys) {
+    const entry = state.entries[k];
+    const [y, m, d] = k.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+
+    const stamp = y + "-" + m;
+    if (stamp !== month) {
+      month = stamp;
+      const h = document.createElement("h2");
+      h.className = "list-month";
+      h.textContent = date.toLocaleDateString(locale(), { month: "long", year: "numeric" });
+      wrap.appendChild(h);
+    }
+
+    const mood = state.manifest.moods.find((x) => x.key === entry.mood);
+    const row = document.createElement("button");
+    row.className = "list-row";
+    row.type = "button";
+    if (mood) row.style.setProperty("--mood", mood.color);
+    row.onclick = () => { setEntryDate(k); goto("today"); };
+
+    // Entries saved before outfits were recorded fall back to the current one
+    // rather than showing an undressed character.
+    const fig = document.createElement("div");
+    fig.className = "char list-char";
+    renderChar(fig, entry.mood, entry.outfit || state.outfit, entry.character || state.character);
+    row.appendChild(fig);
+
+    const body = document.createElement("div");
+    body.className = "list-body";
+
+    const head = document.createElement("div");
+    head.className = "list-head";
+    const day = document.createElement("strong");
+    day.textContent = date.toLocaleDateString(locale(), { weekday: "short", day: "numeric" });
+    const name = document.createElement("span");
+    name.className = "mood-tag";
+    name.textContent = mood ? nameOf(mood) : entry.mood;
+    head.append(day, name);
+    body.appendChild(head);
+
+    if (entry.note) {
+      const p = document.createElement("p");
+      p.className = "list-note";
+      p.textContent = entry.note;
+      body.appendChild(p);
+    }
+
+    const chips = (entry.tags || []).map(tagById).filter(Boolean);
+    if (chips.length) {
+      const tr = document.createElement("div");
+      tr.className = "tagrow shown list-tags";
+      for (const tg of chips) tr.appendChild(tagChip(tg, true, null));
+      body.appendChild(tr);
+    }
+
+    const pics = entry.photos || [];
+    if (pics.length) {
+      const pr = document.createElement("div");
+      pr.className = "list-photos";
+      for (const id of pics) {
+        const img = new Image();
+        img.alt = "";
+        img.loading = "lazy";
+        photoURL(id, "thumb").then((u) => { if (u) img.src = u; });
+        // The row opens the editor; a photo should open the photo instead.
+        img.onclick = (ev) => { ev.stopPropagation(); openLightbox(pics, pics.indexOf(id)); };
+        pr.appendChild(img);
+      }
+      body.appendChild(pr);
+    }
+
+    row.appendChild(body);
+    wrap.appendChild(row);
+  }
 }
 
 /* ── history ─────────────────────────────────────────────────── */
@@ -766,14 +1097,17 @@ function renderDetail() {
       yes.className = "ghost danger";
       yes.textContent = t("del");
       yes.onclick = () => {
+        const gone = (state.entries[k].photos || []).slice();
         delete state.entries[k];
         save();
+        for (const id of gone) { forgetPhotoURL(id); photoDel(id).catch(() => {}); }
         state.selectedDay = null;
         state.editing = null;
         state.confirmDelete = null;
-        if (k === todayKey()) { state.draftMood = null; }
+        if (k === todayKey()) { state.draftMood = null; state.draftPhotos = null; }
         renderToday();
         renderHistory();
+        renderList();
         renderCloset();
       };
       const no = document.createElement("button");
@@ -956,6 +1290,7 @@ function goto(name) {
   const tab = name === "tags" ? state.returnTo : name;
   for (const b of document.querySelectorAll("#tabs button")) b.classList.toggle("active", b.dataset.goto === tab);
   if (name === "history") renderHistory();
+  if (name === "list") renderList();
   if (name === "closet") renderCloset();
   if (name === "tags") renderTags();
   window.scrollTo(0, 0);
@@ -968,6 +1303,7 @@ function rerender() {
   if (!cur) return;
   if (cur.dataset.screen === "today") renderToday();
   if (cur.dataset.screen === "history") renderHistory();
+  if (cur.dataset.screen === "list") renderList();
   if (cur.dataset.screen === "tags") renderTags();
 }
 
@@ -997,6 +1333,10 @@ async function init() {
     setEntryDate(v && v <= todayKey() ? v : todayKey());
   };
   document.getElementById("jump-today").onclick = () => setEntryDate(todayKey());
+  document.getElementById("photo-input").onchange = onPhotoPicked;
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && state.lightbox) { state.lightbox = null; renderLightbox(); }
+  });
   document.getElementById("prev-month").onclick = () => {
     state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth() - 1, 1);
     renderHistory();
@@ -1019,6 +1359,7 @@ async function init() {
 
   setLang(state.lang);        // paints static strings and the toggle state
   goto("today");
+  sweepPhotos();              // after the first paint; nothing waits on it
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(() => {});
