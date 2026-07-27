@@ -139,6 +139,32 @@ def cut_background(render, master, level=242, chroma=12):
     return Image.fromarray(a.astype("uint8"))
 
 
+def standalone_icon(path, level=242, chroma=12, pad=8):
+    """Cut the plate from a lone drawing of an item and crop it to fit.
+
+    No master to diff against here, so the plate is simply whatever white is
+    reachable from the canvas edge. Anything sealed inside the drawing — the
+    lit inside of a hat's crown, a gap under a brim — stays, since on a lone
+    item those are always artwork rather than background.
+    """
+    im = Image.open(path).convert("RGBA")
+    a = np.array(im).astype(int)
+    rgb = a[..., :3]
+    plate = (rgb.min(axis=2) >= level) & ((rgb.max(axis=2) - rgb.min(axis=2)) <= chroma)
+    bg = plate & outside(~plate)
+    a[..., 3] = np.where(bg, 0, 255)
+    im = Image.fromarray(a.astype("uint8"))
+    # Same 1px choke as the worn layers: a colour-threshold cut always leaves a
+    # light fringe, which reads as a halo once the icon sits on a tinted card.
+    r, g, b, al = im.split()
+    im = Image.merge("RGBA", (r, g, b, al.filter(ImageFilter.MinFilter(3))))
+    ys, xs = np.where(np.array(im)[..., 3] > 10)
+    if not len(ys):
+        sys.exit("FAIL: supplied icon %s is blank after cutting its plate." % path)
+    return im.crop((max(0, xs.min() - pad), max(0, ys.min() - pad),
+                    min(im.width, xs.max() + pad), min(im.height, ys.max() + pad)))
+
+
 def main(render_path, name, master_name="base_char_master.png", dark_override=None):
     here = os.path.dirname(os.path.abspath(render_path)) or "."
     master_path = os.path.join(here, master_name)
@@ -250,18 +276,37 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
         sys.exit("FAIL: contour fill leaked — the item outline has a gap. "
                  "Patch the gap in the render, or re-roll it.")
     else:
-        # 6px is a measured compromise, not an oversight. A thick outline can
-        # outrun it — the wide-leg jeans' 9px outer contour loses ~1200px of its
-        # outer half — but every attempt to reclaim that generally has cost far
-        # more than it fixed. Growing outward through *repainted* pixels crawls
-        # the whole figure, because a re-render shifts every base outline enough
-        # to qualify: all 23 items inflated, the sailor blouse by 34%. Growing
-        # only through *dark* pixels fails the same way, since the character's
-        # own outline is dark and touches the garment's: sailor +30%. Widening
-        # the radius trades one item's missing sliver for every other item's
-        # halo. Leave it; patch thick-outline items in icon_cuts.json instead.
+        # 6px is a measured compromise. A thick outline outruns it — the
+        # wide-leg jeans' 9px contour, a sun hat's brim edge — and two earlier
+        # attempts to reclaim that generally both failed badly: growing through
+        # *repainted* pixels crawls the whole figure, since a re-render shifts
+        # every base outline enough to qualify (all 23 items inflated, sailor
+        # +34%), and growing through *dark* pixels fails the same way because
+        # the character's own outline is dark and touches the garment's
+        # (sailor +30%). Both tried to tell item art from character art by
+        # appearance, which is exactly what cannot be done.
         near = morph(body, "dilate", 6)
         mask = body | (dark & near)
+
+        # Outside the old silhouette there is no character art to confuse it
+        # with: anything drawn out there is the new item, whatever it looks
+        # like. So take whole connected pieces of it that touch what we already
+        # have. This is a statement about geometry rather than appearance,
+        # which is why it can be applied safely where the other two could not.
+        # The master is dilated first so a render that shifted an outline by a
+        # pixel doesn't hand us the character's own edge.
+        outer = opaque & ~morph(M[..., 3] > 10, "dilate", 4)
+        olab, ocomps = components(outer)
+        grabbed = 0
+        touching = morph(mask, "dilate", 2)
+        for cid, n in ocomps:
+            reg = olab == cid
+            if (reg & touching).any():
+                mask |= reg
+                grabbed += n
+        if grabbed:
+            print("outside-silhouette pieces reclaimed: %d px" % grabbed)
+
         mask = morph(morph(mask, "dilate", 2), "erode", 2) & opaque
         mask = morph(mask, "dilate", 2) & reach   # back out to the drawn edge
 
@@ -383,13 +428,24 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
     layer = Image.fromarray(out.astype("uint8"))
     layer.save(os.path.join(here, "items", "item_%s.png" % name))
 
-    icon_rgba = T.copy()
-    icon_rgba[..., 3] = np.where(icon_mask, T[..., 3], 0)
-    ys, xs = np.where(icon_mask)
-    pad = 8
-    icon = Image.fromarray(icon_rgba.astype("uint8")).crop(
-        (max(0, xs.min() - pad), max(0, ys.min() - pad),
-         min(w, xs.max() + pad), min(h, ys.max() + pad)))
+    # A standalone drawing of the garment, if one was supplied beside the
+    # render as <render>_icon.png, beats anything derivable from the worn
+    # figure. Some items can't produce a clean icon at all: a brim's curve
+    # can't be separated from the hair beneath it by any rectangle or
+    # threshold, which is why the beanie and the baseball cap both needed
+    # hand-placed cuts. A separate drawing has no hair in it to begin with.
+    supplied = os.path.splitext(render_path)[0] + "_icon.png"
+    if os.path.exists(supplied):
+        icon = standalone_icon(supplied)
+        print("icon: used supplied %s" % os.path.basename(supplied))
+    else:
+        icon_rgba = T.copy()
+        icon_rgba[..., 3] = np.where(icon_mask, T[..., 3], 0)
+        ys, xs = np.where(icon_mask)
+        pad = 8
+        icon = Image.fromarray(icon_rgba.astype("uint8")).crop(
+            (max(0, xs.min() - pad), max(0, ys.min() - pad),
+             min(w, xs.max() + pad), min(h, ys.max() + pad)))
     icon.save(os.path.join(here, "items", "icon_%s.png" % name))
 
     worn = Image.alpha_composite(master, layer)

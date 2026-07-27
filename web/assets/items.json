@@ -134,6 +134,38 @@
       ]
     },
     {
+      "id": "bucket_hat",
+      "slot": "hat",
+      "label": "Bucket Hat",
+      "label_zh": "\u6f01\u592b\u5e3d",
+      "unlockAt": 0,
+      "icon": "icon_bucket_hat.png",
+      "layer": {
+        "girl": "item_bucket_hat.png",
+        "boy": "item_bucket_hat_male.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "straw_hat",
+      "slot": "hat",
+      "label": "Straw Sun Hat",
+      "label_zh": "\u8349\u5e3d",
+      "unlockAt": 0,
+      "icon": "icon_straw_hat.png",
+      "layer": {
+        "girl": "item_straw_hat.png",
+        "boy": "item_straw_hat_male.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
       "id": "hoodie",
       "slot": "top",
       "label": "Cosy Hoodie",

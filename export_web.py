@@ -55,6 +55,8 @@ ITEMS = [
     ("flower_crown",    "hat",    "Flower Crown",       "雛菊花環",       0),
     ("headphones",      "hat",    "Headphones",         "耳機",           0),
     ("star_clips",      "hat",    "Star Clips",         "星星髮夾",       0),
+    ("bucket_hat",      "hat",    "Bucket Hat",         "漁夫帽",         0),
+    ("straw_hat",       "hat",    "Straw Sun Hat",      "草帽",           0),
     ("hoodie",          "top",    "Cosy Hoodie",        "舒適衛衣",     0),
     ("cardigan",        "top",    "Knit Cardigan",      "針織開衫",       0),
     ("sweater",         "top",    "Striped Sweater",    "條紋毛衣",       0),
