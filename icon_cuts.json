@@ -60,5 +60,18 @@
       ],
       "mode": "all"
     }
+  ],
+  "sailor": [
+    {
+      "_note": "White wedge where the girl's shoulder line runs past the boy's narrower body — hidden under her hair, exposed on him. Box holds no collar pixels and only 68px sit over his body, so trimming it costs a speck rather than a hole.",
+      "box": [
+        588,
+        508,
+        622,
+        545
+      ],
+      "mode": "all",
+      "target": "both"
+    }
   ]
 }
