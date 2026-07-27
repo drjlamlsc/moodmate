@@ -244,8 +244,12 @@ async function sweepPhotos() {
    does go stale there is nothing the user can do about it short of deleting
    and reinstalling the app. This is that missing control. */
 
-const PULL_TRIGGER = 70;    // px of travel before the gesture arms
-const PULL_MAX = 110;       // further than this the indicator stops following
+// Indicator travel, not finger travel: the 0.45 resistance below means arming
+// the gesture takes about 245px of actual drag, roughly a third of a phone
+// screen. Deliberately long — refreshing throws away the offline copy, and
+// this fires on a gesture people also use for ordinary scrolling.
+const PULL_TRIGGER = 110;   // px of travel before the gesture arms
+const PULL_MAX = 150;       // further than this the indicator stops following
 let pullY = 0, pullFrom = null, pulling = false;
 
 function pullEl() { return document.getElementById("pull"); }
@@ -1316,28 +1320,20 @@ function renderCloset() {
   renderChar(document.getElementById("char-closet"), state.draftMood || "meh",
              state.outfit, state.character);
 
-  const chars = document.getElementById("char-picker");
+  // A toggle in the corner of the preview rather than a row of portrait cards.
+  // Which body you are is one binary choice made rarely; it was taking a whole
+  // section above the wardrobe, which is the part people actually browse.
+  const chars = document.getElementById("char-toggle");
   chars.innerHTML = "";
-  if (state.manifest.characters.length > 1) {
-    for (const c of state.manifest.characters) {
-      const b = document.createElement("button");
-      b.className = "card char-card";
-      b.setAttribute("aria-pressed", String(c.id === state.character));
-      const fig = document.createElement("div");
-      fig.className = "head";
-      for (const l of layersFor("meh", { hat: null, top: null, bottom: null }, c.id)) {
-        const img = new Image();
-        img.src = asset(l.src);
-        img.alt = "";
-        fig.appendChild(img);
-      }
-      const nm = document.createElement("span");
-      nm.className = "name";
-      nm.textContent = nameOf(c);
-      b.append(fig, nm);
-      b.onclick = () => setCharacter(c.id);
-      chars.appendChild(b);
-    }
+  chars.hidden = state.manifest.characters.length < 2;
+  for (const c of state.manifest.characters) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = c.id === state.character ? "on" : "";
+    b.setAttribute("aria-pressed", String(c.id === state.character));
+    b.textContent = nameOf(c);
+    b.onclick = () => setCharacter(c.id);
+    chars.appendChild(b);
   }
 
   const slots = document.getElementById("slots");
