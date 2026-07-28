@@ -164,7 +164,7 @@ def face_hair_mask(path):
     return Image.fromarray(np.where(m, 255, 0).astype("uint8"), "L")
 
 
-def item_hair_mask(item_path, master_path, min_px=300):
+def item_hair_mask(item_path, master_paths, min_px=1500):
     """Hair mask for a garment layer that redraws hair, or None if it doesn't.
 
     A wide-brimmed hat is drawn with the hair falling in front of it, so those
@@ -177,25 +177,59 @@ def item_hair_mask(item_path, master_path, min_px=300):
     *the same pixels in the same places* as the base, while a lavender hat is
     the hat's own shape and shading. Measured against the girl's base:
 
-        straw hat    57% of its violet pixels identical to the base   hair
-        bucket hat   48%                                             hair
-        beanie        3%                                             its own
-        cat ears      3%                                             its own
-        pleated skirt 0%                                             its own
+        straw hat    32916 px of seed in 7 pieces up to 10737   redraws hair
+        cap           6702 px in 3 pieces                       redraws hair
+        bucket hat    4677 px in 2 pieces                       redraws hair
+        beanie         491 px in 1 piece                        its own colour
+        cat ears / bow / crown / clips: no piece over 400px      its own colour
     """
-    from process_item import morph
+    from process_item import components
     a = np.array(Image.open(item_path).convert("RGBA")).astype(int)
-    m0 = np.array(Image.open(master_path).convert("RGBA")).astype(int)
-    if a.shape != m0.shape:
-        return None
     rgb, alpha = a[..., :3], a[..., 3] > 10
     r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
     violet = alpha & ((b - g) >= 15) & ((r - g) >= 5)
-    same = np.abs(rgb - m0[..., :3]).max(axis=2) <= 10
-    m = violet & same
-    if m.sum() < min_px:
+
+    # Matching the base pixel for pixel proves hair, but only in bulk. A
+    # lavender hat over lavender hair matches here and there by chance, and
+    # those hits are dust: the beanie's 994 matches come in 787 pieces none
+    # bigger than 10px, while the straw hat's arrive in 7 pieces up to 10737.
+    # Dilating the dust is what speckled red through the beanie's knit.
+    #
+    # Tried against every master, keeping the strongest, because the art may
+    # not have been drawn on the character wearing it: the cap comes from the
+    # boy, so on the girl it matched nothing, no hair was found in it, and the
+    # strands it draws kept the old colour. Scored on the seed rather than on
+    # matches overall, which is not the same thing — by matches overall the
+    # beanie prefers the boy, and picks up a single spurious 491px piece.
+    seed = np.zeros(alpha.shape, bool)
+    for mp in master_paths:
+        m0 = np.array(Image.open(mp).convert("RGBA")).astype(int)
+        if m0.shape != a.shape:
+            continue
+        same = np.abs(rgb - m0[..., :3]).max(axis=2) <= 10
+        here = np.zeros(alpha.shape, bool)
+        slab, scomps = components(violet & same)
+        for cid, n in scomps:
+            if n < 400:
+                break
+            here |= slab == cid
+        if here.sum() > seed.sum():
+            seed = here
+    if seed.sum() < min_px:
         return None
-    m = morph(morph(m, "dilate", 3), "erode", 3) & alpha & violet
+
+    # Then take the whole violet shape each seed sits in, because the match
+    # test is also too strict on its own: hair shaded under a brim differs from
+    # the base and failed it, leaving a band of the original colour across the
+    # forehead. Growing to the connected shape picks that up while leaving the
+    # straw hat's lavender ribbon alone — a separate component, no seed in it,
+    # and bluer than hair (235 against 217).
+    m = np.zeros(alpha.shape, bool)
+    vlab, vcomps = components(violet)
+    for cid, n in vcomps:
+        reg = vlab == cid
+        if (reg & seed).sum() >= 100:
+            m |= reg
     return Image.fromarray(np.where(m, 255, 0).astype("uint8"), "L")
 
 
@@ -383,9 +417,8 @@ def main():
 
                     # A hat drawn with hair falling over it carries those
                     # strands in its own layer; they must follow the colour too.
-                    master_src = os.path.join(HERE, dict(
-                        (c[0], c[3]) for c in CHARACTERS)[cid])
-                    imask = item_hair_mask(src, master_src)
+                    imask = item_hair_mask(
+                        src, [os.path.join(HERE, c[3]) for c in CHARACTERS])
                     if imask is not None:
                         iname = "item_%s_hair.png" % candidate
                         total += write_hair_mask(
@@ -396,6 +429,8 @@ def main():
         for cid in live:
             if cid not in fits and not only and slot in FITS_BOTH and "girl" in layers:
                 layers[cid] = layers["girl"]
+                if "girl" in hairmasks:
+                    hairmasks[cid] = hairmasks["girl"]
                 fits.append(cid)
         if not layers:
             print("  missing art for %s, skipping" % name)
@@ -425,6 +460,17 @@ def main():
     # Written before the manifest so the stamp can go into it: the app appends
     # it to every asset URL, which is what defeats the browser's HTTP cache.
     # The service worker's own cache name uses the same value.
+    # A hair mask is only written when a layer turns out to redraw hair, so a
+    # layer that stops qualifying leaves its old mask behind — unreferenced but
+    # still shipped, and liable to be picked up again by a later change.
+    keep = {c.get("hairMask") for c in manifest["characters"]}
+    for entry in manifest["moods"] + manifest["items"]:
+        keep |= set((entry.get("hairMask") or {}).values())
+    for f in os.listdir(OUT):
+        if f.endswith("_hair.png") and f not in keep:
+            os.remove(os.path.join(OUT, f))
+            print("  dropped stale mask %s" % f)
+
     manifest["build"] = stamp_service_worker()
 
     with open(os.path.join(OUT, "items.json"), "w") as f:

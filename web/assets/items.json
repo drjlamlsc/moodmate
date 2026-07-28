@@ -47,9 +47,7 @@
         "boy",
         "girl"
       ],
-      "hairMask": {
-        "girl": "item_beanie_hair.png"
-      }
+      "hairMask": {}
     },
     {
       "id": "beret",
@@ -83,9 +81,7 @@
         "boy",
         "girl"
       ],
-      "hairMask": {
-        "girl": "item_cat_ears_hair.png"
-      }
+      "hairMask": {}
     },
     {
       "id": "bow",
@@ -102,9 +98,7 @@
         "boy",
         "girl"
       ],
-      "hairMask": {
-        "girl": "item_bow_hair.png"
-      }
+      "hairMask": {}
     },
     {
       "id": "flower_crown",
@@ -121,9 +115,7 @@
         "boy",
         "girl"
       ],
-      "hairMask": {
-        "girl": "item_flower_crown_hair.png"
-      }
+      "hairMask": {}
     },
     {
       "id": "headphones",
@@ -157,9 +149,7 @@
         "boy",
         "girl"
       ],
-      "hairMask": {
-        "girl": "item_star_clips_hair.png"
-      }
+      "hairMask": {}
     },
     {
       "id": "bucket_hat",
@@ -556,7 +546,10 @@
         "boy",
         "girl"
       ],
-      "hairMask": {}
+      "hairMask": {
+        "girl": "item_male_cap_hair.png",
+        "boy": "item_male_cap_hair.png"
+      }
     },
     {
       "id": "male_gakuran",
@@ -675,5 +668,5 @@
       }
     }
   ],
-  "build": "4eeb5680ec"
+  "build": "48f2f7629a"
 }
