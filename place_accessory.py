@@ -32,8 +32,15 @@ import numpy as np
 from PIL import Image, ImageFilter
 from process_item import outside, components
 
-EYE_L = (432.0, 377.0)      # mean eye-ink centroid, all ten faces
-EYE_R = (595.0, 379.0)
+# Centre of each eye, not the centroid of its ink. The first attempt used the
+# ink centroid and sat the glasses ~13px high, because the brow and the heavy
+# upper lash line drag that centroid up above the eye itself. These come from
+# the vertical extent of eye ink in a window clear of the hair (girl 394, boy
+# 388) and the horizontal extent mirrored about the figure's centre at x=512.
+# Both anchors share a y so the placement is level: the couple of pixels of
+# difference the two eyes measure is noise, and honouring it tilts the frame.
+EYE_L = (428.0, 391.0)
+EYE_R = (596.0, 391.0)
 CANVAS = 1024
 PLATE_LEVEL, PLATE_CHROMA = 242, 12
 
