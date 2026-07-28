@@ -1,8 +1,8 @@
 {
   "canvas": 512,
   "slots": {
-    "shoes": 5,
     "bottom": 10,
+    "shoes": 15,
     "top": 20,
     "face": 30,
     "face_acc": 35,
@@ -442,6 +442,23 @@
       "hairMask": {}
     },
     {
+      "id": "sneakers",
+      "slot": "shoes",
+      "label": "Canvas Sneakers",
+      "label_zh": "\u5e06\u5e03\u978b",
+      "unlockAt": 0,
+      "icon": "icon_sneakers.png",
+      "layer": {
+        "girl": "item_sneakers.png",
+        "boy": "item_sneakers.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ],
+      "hairMask": {}
+    },
+    {
       "id": "roundglasses",
       "slot": "face_acc",
       "label": "Round Glasses",
@@ -754,5 +771,5 @@
       }
     }
   ],
-  "build": "9e0c59f359"
+  "build": "fba56ad2d4"
 }

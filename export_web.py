@@ -26,10 +26,12 @@ ICON_PX = 192      # closet thumbnails
 # cover it, and below hats so a brim falls over the brow correctly.
 # face_acc sits above the expression so a frame draws over the eyes, and
 # below hats so a brim still falls in front of it.
-# Shoes sit below bottoms, not above: a long trouser leg falls over the top of
-# a shoe, and drawing the shoe over the hem would put the foot outside the
-# trouser. Skirts and shorts end well above the ankle, so nothing is lost.
-SLOTS = {"shoes": 5, "bottom": 10, "top": 20, "face": 30, "face_acc": 35, "hat": 40}
+# Shoes sit ABOVE bottoms. Real trousers break over a shoe, which argues for
+# putting them under — but these trousers are not drawn that way: the jeans, the
+# gakuran trousers and the pyjama pants all reach y=936 against the foot's own
+# bottom edge at 938, so a shoe beneath them is not partly covered, it is
+# invisible. Above the hem the toe reads, and the leg simply ends inside it.
+SLOTS = {"bottom": 10, "shoes": 15, "top": 20, "face": 30, "face_acc": 35, "hat": 40}
 
 # Two characters, same canvas and registration. Each item may have art per
 # character; where it doesn't, see FITS_BOTH below.
@@ -44,7 +46,7 @@ CHARACTERS = [
 # body and hairline, so a borrowed one sits a little wide and may show a gap
 # where the original character's hair used to be. Add per-character art —
 # item_<name>_male.png — and it takes over automatically, no config change.
-FITS_BOTH = {"bottom", "top", "hat", "face_acc"}
+FITS_BOTH = {"bottom", "shoes", "top", "hat", "face_acc"}
 
 # unlockAt is the number of entries needed before an item can be worn. The
 # starter set is all 0 — everything available from day one. The gating still
@@ -83,6 +85,7 @@ ITEMS = [
     ("skirt_navy",      "bottom", "Navy Pleated Skirt", "藏青百褶裙",     0),
     ("gakuran_pants",   "bottom", "Uniform Trousers",   "學生褲",         0),
     ("pyjama_pants",    "bottom", "Pyjama Pants",       "睡褲",           0),
+    ("sneakers",        "shoes",  "Canvas Sneakers",    "帆布鞋",         0),
     ("roundglasses",    "face_acc", "Round Glasses",    "圓框眼鏡",       0),
     ("squareglasses",   "face_acc", "Square Glasses",   "方框眼鏡",       0),
     ("heartglasses",    "face_acc", "Heart Glasses",    "心形眼鏡",       0),
