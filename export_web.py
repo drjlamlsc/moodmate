@@ -114,6 +114,32 @@ def save(img, path, px):
 HAIR_BANDS = {"girl": [185, 232], "boy": [160, 205]}
 
 
+def write_hair_mask(mask, art_path, out_path):
+    """Resize a 1024px hair mask to match the exported art, and close the fringe.
+
+    The art is resampled to CHAR_PX with LANCZOS, which overshoots *lighter*
+    beside a dark line — pixels next to the hair's outlines come out at 204-232
+    against the hair's own 211. Those pixels do not exist in the master, so a
+    mask derived from it cannot cover them, and they survive recolouring as a
+    dotted white seam tracing every line. (Deriving the mask from the 512 art
+    instead is worse: the seal costs proportionally more at that size and the
+    mask comes out smaller.)
+
+    So grow the mask by a pixel here, at the size it will be used, and take
+    away anything as dark as line art. That covers the overshoot and leaves the
+    linework black — measured at zero ink pixels painted, with the fringe down
+    by about two thirds.
+    """
+    from process_item import morph
+    m = np.array(mask.resize((CHAR_PX, CHAR_PX), Image.NEAREST)) >= 128
+    art = np.array(Image.open(art_path).convert("RGBA")).astype(int)
+    solid = art[..., 3] > 10
+    lum = art[..., :3].mean(axis=2)
+    m = morph(m, "dilate", 1) & solid & (lum >= 110)
+    Image.fromarray(np.where(m, 255, 0).astype("uint8"), "L").save(out_path, optimize=True)
+    return os.path.getsize(out_path)
+
+
 def face_hair_mask(path):
     """Hair mask for a mood's face layer, which redraws the bangs over the eyes.
 
@@ -294,10 +320,8 @@ def main():
         # a smooth resample would leave half-lit edge pixels that recolour into
         # a fringe of the wrong shade against the line art.
         mask_name = out_name.replace(".png", "_hair.png")
-        mk = hair_mask(src)
-        mk.resize((CHAR_PX, CHAR_PX), Image.NEAREST).save(
-            os.path.join(OUT, mask_name), optimize=True)
-        total += os.path.getsize(os.path.join(OUT, mask_name))
+        total += write_hair_mask(hair_mask(src), os.path.join(OUT, out_name),
+                                 os.path.join(OUT, mask_name))
 
         manifest["characters"].append(
             {"id": cid, "label": clabel, "label_zh": clabel_zh, "base": out_name,
@@ -323,9 +347,9 @@ def main():
                 # The bangs this layer redraws have to follow the hair colour
                 # too, or they stay the original lavender on top of it.
                 fmask = "%s_hair.png" % fname
-                face_hair_mask(src).resize((CHAR_PX, CHAR_PX), Image.NEAREST).save(
-                    os.path.join(OUT, fmask), optimize=True)
-                total += os.path.getsize(os.path.join(OUT, fmask))
+                total += write_hair_mask(face_hair_mask(src),
+                                         os.path.join(OUT, "%s.png" % fname),
+                                         os.path.join(OUT, fmask))
                 entry.setdefault("hairMask", {})[cid] = fmask
         manifest["moods"].append(entry)
 
@@ -355,9 +379,9 @@ def main():
                     imask = item_hair_mask(src, master_src)
                     if imask is not None:
                         iname = "item_%s_hair.png" % candidate
-                        imask.resize((CHAR_PX, CHAR_PX), Image.NEAREST).save(
-                            os.path.join(OUT, iname), optimize=True)
-                        total += os.path.getsize(os.path.join(OUT, iname))
+                        total += write_hair_mask(
+                            imask, os.path.join(OUT, "item_%s.png" % candidate),
+                            os.path.join(OUT, iname))
                         hairmasks[cid] = iname
         # No art for this character, but bottoms are measured to fit both.
         for cid in live:
