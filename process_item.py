@@ -552,7 +552,14 @@ DARK_OVERRIDES = {"male_gakuran": 55, "sailor": 55, "male_tie_shirt": 55,
                   # still above the fill at 93, and the run aborts with no item
                   # regions at all. The gap it has to land in is wide — the real
                   # ink's 95th percentile is 40, the navy's 5th is 63.
-                  "skirt_navy": 50}
+                  "skirt_navy": 50,
+                  # Darker navy than the skirt's, and the gap is correspondingly
+                  # tighter: ink's 95th percentile is 43 against the fabric's 5th
+                  # at 59, with a clear trough between them at 50-60. Both bodies
+                  # measure the same, so both take the same value. Over 40% of
+                  # each figure sits below the default threshold — the automatic
+                  # step would fire here, which is exactly why it is pinned.
+                  "yukata": 50, "yukata_male": 50}
 
 
 if __name__ == "__main__":

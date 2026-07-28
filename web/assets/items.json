@@ -237,6 +237,24 @@
       "coversBottom": true
     },
     {
+      "id": "yukata",
+      "slot": "top",
+      "label": "Summer Yukata",
+      "label_zh": "\u6d74\u8863",
+      "unlockAt": 0,
+      "icon": "icon_yukata.png",
+      "layer": {
+        "girl": "item_yukata.png",
+        "boy": "item_yukata_male.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ],
+      "hairMask": {},
+      "coversBottom": true
+    },
+    {
       "id": "skirt_pleated",
       "slot": "bottom",
       "label": "Pleated Skirt",
@@ -736,5 +754,5 @@
       }
     }
   ],
-  "build": "bc9209c2d7"
+  "build": "93a02cd9c2"
 }

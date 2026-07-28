@@ -71,6 +71,7 @@ ITEMS = [
     ("male_gakuran",    "top",    "Gakuran Jacket",     "學生外套",       0),
     ("croptop",         "top",    "Crop Tee",           "短版T恤",        0),
     ("sundress",        "top",    "Sunflower Sundress", "向日葵洋裝",     0, "girl"),
+    ("yukata",          "top",    "Summer Yukata",      "浴衣",           0),
     ("skirt_pleated",   "bottom", "Pleated Skirt",      "百褶裙",         0),
     ("skirt_plaid",     "bottom", "Plaid Skirt",        "格仔裙",         0),
     ("joggers",         "bottom", "Joggers",            "束腳運動褲",     0),
@@ -102,7 +103,7 @@ ITEMS = [
 # slot: it lives in `top` so it composites over anything in `bottom`. Listed
 # here, it also suppresses the bottom entirely — otherwise trouser legs run out
 # below the hem. The closet greys that section out while one is worn.
-COVERS_BOTTOM = {"sundress"}
+COVERS_BOTTOM = {"sundress", "yukata"}
 
 MOODS = [
     # key      label     face layer (None = master's own face)  colour   zh
