@@ -495,7 +495,7 @@
       "icon": "icon_male_gakuran.png",
       "layer": {
         "girl": "item_male_gakuran.png",
-        "boy": "item_male_gakuran.png"
+        "boy": "item_male_gakuran_male.png"
       },
       "fits": [
         "boy",
@@ -584,5 +584,5 @@
       "color": "#3ea56a"
     }
   ],
-  "build": "e01abde348"
+  "build": "4938b13197"
 }

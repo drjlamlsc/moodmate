@@ -325,6 +325,42 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
             if grabbed:
                 print("outside-silhouette pieces reclaimed: %d px" % grabbed)
 
+            # Dark fill the wall swallowed. `dark` does double duty: it marks
+            # line art *and* it is the seal that stops the contour fill leaking.
+            # So a part of a garment painted darker than the garment it belongs
+            # to — the gakuran's collar at luminance 40 against its own body at
+            # 75 — is sealed rather than filled, and only the 6px `near` margin
+            # rescues any of it. Lowering the threshold is not the answer: it
+            # thins the seal, and at 40 this jacket's fill escaped into the
+            # figure and took the whole head with it, 45k px to 155k.
+            #
+            # What separates that fill from the character's own dark art is not
+            # how it looks — that is the test which failed twice before — but
+            # what it covers. The hair is dark in the master too; the collar was
+            # painted over light skin. So take dark that is *newly* dark and
+            # repainted, in whole connected pieces touching what we already
+            # have. The master is dilated first so an outline that shifted by a
+            # pixel doesn't read as newly dark along its whole length — by the
+            # drift actually measured above rather than a fixed guess, since
+            # that margin is pure loss: a collar rising under a chin sits within
+            # a few pixels of the jaw outline, and at a flat 3px that outline's
+            # halo swallowed 89% of it.
+            was_dark = flat(M).mean(axis=2) < dark_level
+            slack = max(1, min(int(drift), 3))
+            fresh = dark & ~morph(was_dark, "dilate", slack) & (diff > REPAINT)
+            flab, fcomps = components(fresh)
+            regained = 0
+            reachable = morph(mask, "dilate", 2)
+            for cid, n in fcomps:
+                if n < 150:
+                    break
+                reg = flab == cid
+                if (reg & reachable).any():
+                    mask |= reg
+                    regained += n
+            if regained:
+                print("dark fill reclaimed from the seal: %d px" % regained)
+
             mask = morph(morph(mask, "dilate", 2), "erode", 2) & opaque
             mask = morph(mask, "dilate", 2) & reach   # back out to the drawn edge
 
