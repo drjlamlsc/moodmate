@@ -26,12 +26,13 @@ ICON_PX = 192      # closet thumbnails
 # cover it, and below hats so a brim falls over the brow correctly.
 # face_acc sits above the expression so a frame draws over the eyes, and
 # below hats so a brim still falls in front of it.
-# Shoes sit ABOVE bottoms. Real trousers break over a shoe, which argues for
-# putting them under — but these trousers are not drawn that way: the jeans, the
-# gakuran trousers and the pyjama pants all reach y=936 against the foot's own
-# bottom edge at 938, so a shoe beneath them is not partly covered, it is
-# invisible. Above the hem the toe reads, and the leg simply ends inside it.
-SLOTS = {"bottom": 10, "shoes": 15, "top": 20, "face": 30, "face_acc": 35, "hat": 40}
+# Shoes sit below bottoms, so a trouser leg breaks over the shoe the way it
+# does in life. The cost is real and worth knowing: the jeans, the gakuran
+# trousers and the pyjama pants are drawn to y=936 against the foot's own
+# bottom edge at 938, so those three hide a shoe completely rather than
+# leaving a toe. Joggers (915) and cargo pants (920) leave the shoe showing,
+# and every skirt and short ends far above the ankle.
+SLOTS = {"shoes": 5, "bottom": 10, "top": 20, "face": 30, "face_acc": 35, "hat": 40}
 
 # Two characters, same canvas and registration. Each item may have art per
 # character; where it doesn't, see FITS_BOTH below.

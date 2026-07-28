@@ -1,8 +1,8 @@
 {
   "canvas": 512,
   "slots": {
+    "shoes": 5,
     "bottom": 10,
-    "shoes": 15,
     "top": 20,
     "face": 30,
     "face_acc": 35,
@@ -771,5 +771,5 @@
       }
     }
   ],
-  "build": "fba56ad2d4"
+  "build": "447993fc72"
 }
