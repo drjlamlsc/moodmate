@@ -60,6 +60,7 @@ const STRINGS = {
 
   character:        { en: "Character",        zh: "角色" },
   head:             { en: "Head",             zh: "頭部" },
+  faceAcc:          { en: "Face",             zh: "面部" },
   tops:             { en: "Tops",             zh: "上身" },
   bottoms:          { en: "Bottoms",          zh: "下身" },
   none:             { en: "None",             zh: "無" },

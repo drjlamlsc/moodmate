@@ -4,6 +4,7 @@
     "bottom": 10,
     "top": 20,
     "face": 30,
+    "face_acc": 35,
     "hat": 40
   },
   "characters": [
@@ -406,6 +407,22 @@
       ]
     },
     {
+      "id": "roundglasses",
+      "slot": "face_acc",
+      "label": "Round Glasses",
+      "label_zh": "\u5713\u6846\u773c\u93e1",
+      "unlockAt": 0,
+      "icon": "icon_roundglasses.png",
+      "layer": {
+        "girl": "item_roundglasses.png",
+        "boy": "item_roundglasses.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
       "id": "male_cap",
       "slot": "hat",
       "label": "Baseball Cap",
@@ -519,5 +536,5 @@
       "color": "#3ea56a"
     }
   ],
-  "build": "d87ebda41b"
+  "build": "7c4a7f603d"
 }

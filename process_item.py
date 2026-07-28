@@ -241,82 +241,100 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
         if dark_level != DARK:
             print("line-art threshold lowered to %d (dark garment)" % dark_level)
 
-    # --- exact silhouette: fill the item's own closed contour ---
-    # The character's own line art also encloses regions (face, hair), so a seed
-    # decides which enclosed regions belong to the item. The only reliable seed
-    # is pixels the item added *outside* the old silhouette: colour-based seeds
-    # leak, because the re-render shifts every outline enough to look "changed".
-    seed = morph(opaque & (M[..., 3] <= 10), "dilate", 3)
-
-    dark = opaque & (lum < dark_level)
-    sealed = morph(dark, "dilate", 2)
-    interior = ~sealed & ~outside(sealed)
-    ilab, icomps = components(interior)
-    body = np.zeros((h, w), bool)
-    kept = []
-    for cid, n in icomps:
-        if n < MIN_REGION:
-            continue
-        reg = ilab == cid
-        # A region belongs to the item if the item pushed it outside the old
-        # silhouette (sleeves, a hat brim), or if its artwork was repainted.
-        # Untouched regions barely move at all, so the margin is enormous; a
-        # slim garment whose torso stays inside the body outline is caught by
-        # the second test alone.
-        if (seed & reg).sum() < SEED_OVERLAP and (diff[reg] > REPAINT).mean() < REPAINT_SHARE:
-            continue
-        body |= reg
-        kept.append(n)
-    print("enclosed regions kept: %s" % kept)
-    if not kept:
-        sys.exit("FAIL: found no item regions. Either the render is identical to "
-                 "the master, or the item's outline has a gap and leaked.")
-
-    if body.sum() > 0.4 * h * w:
-        sys.exit("FAIL: contour fill leaked — the item outline has a gap. "
-                 "Patch the gap in the render, or re-roll it.")
+    # --- thin accessories take a different route entirely ---
+    # Everything below assumes an item encloses fill of its own. Glasses do not:
+    # they are a closed ring around base that stays visible through the lens.
+    # Run as a garment the contour fill enclosed the whole face, the
+    # base-showing-through test then dropped it as unchanged, and 24034px of
+    # kept region became a 0px layer.
+    #
+    # For these the item simply *is* what changed — which is also what makes the
+    # lens work, since untouched pixels inside the rim stay out of the layer and
+    # the frame floats over whichever expression is beneath. The corollary is
+    # that the render must leave the lenses alone: any tint or glare counts as a
+    # change and would bake one mood's eyes into the glasses.
+    if name in ACCESSORIES:
+        mask = opaque & (diff > REPAINT)
+        mask = morph(morph(mask, "dilate", 1), "erode", 1) & opaque
+        mask = morph(mask, "dilate", 1) & reach
+        print("accessory mode: %d px changed" % int(mask.sum()))
     else:
-        # 6px is a measured compromise. A thick outline outruns it — the
-        # wide-leg jeans' 9px contour, a sun hat's brim edge — and two earlier
-        # attempts to reclaim that generally both failed badly: growing through
-        # *repainted* pixels crawls the whole figure, since a re-render shifts
-        # every base outline enough to qualify (all 23 items inflated, sailor
-        # +34%), and growing through *dark* pixels fails the same way because
-        # the character's own outline is dark and touches the garment's
-        # (sailor +30%). Both tried to tell item art from character art by
-        # appearance, which is exactly what cannot be done.
-        near = morph(body, "dilate", 6)
-        mask = body | (dark & near)
+        # --- exact silhouette: fill the item's own closed contour ---
+        # The character's own line art also encloses regions (face, hair), so a seed
+        # decides which enclosed regions belong to the item. The only reliable seed
+        # is pixels the item added *outside* the old silhouette: colour-based seeds
+        # leak, because the re-render shifts every outline enough to look "changed".
+        seed = morph(opaque & (M[..., 3] <= 10), "dilate", 3)
 
-        # Outside the old silhouette there is no character art to confuse it
-        # with: anything drawn out there is the new item, whatever it looks
-        # like. So take whole connected pieces of it that touch what we already
-        # have. This is a statement about geometry rather than appearance,
-        # which is why it can be applied safely where the other two could not.
-        # The master is dilated first so a render that shifted an outline by a
-        # pixel doesn't hand us the character's own edge.
-        outer = opaque & ~morph(M[..., 3] > 10, "dilate", 4)
-        olab, ocomps = components(outer)
-        grabbed = 0
-        touching = morph(mask, "dilate", 2)
-        for cid, n in ocomps:
-            reg = olab == cid
-            if (reg & touching).any():
-                mask |= reg
-                grabbed += n
-        if grabbed:
-            print("outside-silhouette pieces reclaimed: %d px" % grabbed)
+        dark = opaque & (lum < dark_level)
+        sealed = morph(dark, "dilate", 2)
+        interior = ~sealed & ~outside(sealed)
+        ilab, icomps = components(interior)
+        body = np.zeros((h, w), bool)
+        kept = []
+        for cid, n in icomps:
+            if n < MIN_REGION:
+                continue
+            reg = ilab == cid
+            # A region belongs to the item if the item pushed it outside the old
+            # silhouette (sleeves, a hat brim), or if its artwork was repainted.
+            # Untouched regions barely move at all, so the margin is enormous; a
+            # slim garment whose torso stays inside the body outline is caught by
+            # the second test alone.
+            if (seed & reg).sum() < SEED_OVERLAP and (diff[reg] > REPAINT).mean() < REPAINT_SHARE:
+                continue
+            body |= reg
+            kept.append(n)
+        print("enclosed regions kept: %s" % kept)
+        if not kept:
+            sys.exit("FAIL: found no item regions. Either the render is identical to "
+                     "the master, or the item's outline has a gap and leaked.")
 
-        mask = morph(morph(mask, "dilate", 2), "erode", 2) & opaque
-        mask = morph(mask, "dilate", 2) & reach   # back out to the drawn edge
+        if body.sum() > 0.4 * h * w:
+            sys.exit("FAIL: contour fill leaked — the item outline has a gap. "
+                     "Patch the gap in the render, or re-roll it.")
+        else:
+            # 6px is a measured compromise. A thick outline outruns it — the
+            # wide-leg jeans' 9px contour, a sun hat's brim edge — and two earlier
+            # attempts to reclaim that generally both failed badly: growing through
+            # *repainted* pixels crawls the whole figure, since a re-render shifts
+            # every base outline enough to qualify (all 23 items inflated, sailor
+            # +34%), and growing through *dark* pixels fails the same way because
+            # the character's own outline is dark and touches the garment's
+            # (sailor +30%). Both tried to tell item art from character art by
+            # appearance, which is exactly what cannot be done.
+            near = morph(body, "dilate", 6)
+            mask = body | (dark & near)
 
-        # Thin details enclosed by the item's own linework (drawstrings, seams)
-        # fall under MIN_REGION and leave pinholes. Fill the small ones; leave
-        # big ones alone, since those are real gaps like a collar notch.
-        hlab, hcomps = components(~mask & ~outside(mask))
-        for cid, n in hcomps:
-            if n < 400:
-                mask |= hlab == cid
+            # Outside the old silhouette there is no character art to confuse it
+            # with: anything drawn out there is the new item, whatever it looks
+            # like. So take whole connected pieces of it that touch what we already
+            # have. This is a statement about geometry rather than appearance,
+            # which is why it can be applied safely where the other two could not.
+            # The master is dilated first so a render that shifted an outline by a
+            # pixel doesn't hand us the character's own edge.
+            outer = opaque & ~morph(M[..., 3] > 10, "dilate", 4)
+            olab, ocomps = components(outer)
+            grabbed = 0
+            touching = morph(mask, "dilate", 2)
+            for cid, n in ocomps:
+                reg = olab == cid
+                if (reg & touching).any():
+                    mask |= reg
+                    grabbed += n
+            if grabbed:
+                print("outside-silhouette pieces reclaimed: %d px" % grabbed)
+
+            mask = morph(morph(mask, "dilate", 2), "erode", 2) & opaque
+            mask = morph(mask, "dilate", 2) & reach   # back out to the drawn edge
+
+            # Thin details enclosed by the item's own linework (drawstrings, seams)
+            # fall under MIN_REGION and leave pinholes. Fill the small ones; leave
+            # big ones alone, since those are real gaps like a collar notch.
+            hlab, hcomps = components(~mask & ~outside(mask))
+            for cid, n in hcomps:
+                if n < 400:
+                    mask |= hlab == cid
 
     # Drop the character showing through. Adding the item's contour drags in
     # whatever it touches: a chunk of hair beside a collar, the neck inside a
@@ -484,6 +502,8 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
 # ink) survives into the layer. Auditing all 21 that way found these three and
 # nothing else — the rest of the low scores are shading that falls on the
 # character, such as hair under a brim, and is excluded correctly.
+ACCESSORIES = {"roundglasses"}
+
 DARK_OVERRIDES = {"male_gakuran": 55, "sailor": 55, "male_tie_shirt": 55}
 
 

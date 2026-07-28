@@ -54,7 +54,7 @@ const state = {
   character: "girl",                             // which body is worn
   entries: {},                                   // "YYYY-MM-DD" -> {mood, note, tags}
   tags: [],                                      // {id, label, icon, group, order, archived}
-  outfit: { hat: null, top: null, bottom: null },
+  outfit: { hat: null, top: null, bottom: null, face_acc: null },
   manifest: null,
   entryDate: null,                               // which day the entry screen edits
   draftMood: null,
@@ -89,8 +89,8 @@ function load() {
     // Only absent storage gets the default; someone who took the hoodie off
     // has made a choice, and reload shouldn't undo it.
     state.outfit = raw.outfit
-      ? Object.assign({ hat: null, top: null, bottom: null }, raw.outfit)
-      : { hat: null, top: "hoodie", bottom: null };
+      ? Object.assign({ hat: null, top: null, bottom: null, face_acc: null }, raw.outfit)
+      : { hat: null, top: "hoodie", bottom: null, face_acc: null };
     state.tags = Array.isArray(raw.tags) && raw.tags.length ? raw.tags : seedTags();
     if (raw.lang === "en" || raw.lang === "zh") state.lang = raw.lang;
     if (raw.theme === "light" || raw.theme === "dark") state.theme = raw.theme;
@@ -110,7 +110,7 @@ function load() {
     /* Corrupt or unreadable storage shouldn't brick the app; start fresh
        rather than throwing before the first render. */
     state.tags = seedTags();
-    state.outfit = { hat: null, top: "hoodie", bottom: null };
+    state.outfit = { hat: null, top: "hoodie", bottom: null, face_acc: null };
   }
 }
 
@@ -536,6 +536,8 @@ function layersFor(mood, outfit, character) {
   if (outfit.top) push(outfit.top, "top");
   const mo = m.moods.find((x) => x.key === mood);
   if (mo && mo.layer && mo.layer[ch]) out.push({ src: mo.layer[ch], z: m.slots.face });
+  // Above the expression, below hats: a frame covers the eyes, a brim covers it.
+  if (outfit.face_acc) push(outfit.face_acc, "face_acc");
   if (outfit.hat) push(outfit.hat, "hat");
   return out.sort((a, b) => a.z - b.z);
 }
@@ -1338,7 +1340,7 @@ function renderCloset() {
 
   const slots = document.getElementById("slots");
   slots.innerHTML = "";
-  for (const [slot, title] of [["hat", "head"], ["top", "tops"], ["bottom", "bottoms"]]) {
+  for (const [slot, title] of [["hat", "head"], ["face_acc", "faceAcc"], ["top", "tops"], ["bottom", "bottoms"]]) {
     // Only what this character has art for. Anything else would render as
     // nothing at all, which reads as a broken item rather than an absent one.
     const items = state.manifest.items.filter(
@@ -1395,7 +1397,7 @@ function setCharacter(id) {
   state.character = id;
   // Slots holding an item this body has no art for would silently render as
   // nothing, so clear them rather than leave an invisible "worn" item.
-  for (const slot of ["hat", "top", "bottom"]) {
+  for (const slot of ["hat", "face_acc", "top", "bottom"]) {
     const worn = state.outfit[slot];
     if (!worn) continue;
     const it = state.manifest.items.find((i) => i.id === worn);

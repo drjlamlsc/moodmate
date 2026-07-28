@@ -23,7 +23,9 @@ ICON_PX = 192      # closet thumbnails
 # slot -> draw order. Bottom garments first, then tops, then the face, then
 # anything on the head. The face sits above tops so a high collar can never
 # cover it, and below hats so a brim falls over the brow correctly.
-SLOTS = {"bottom": 10, "top": 20, "face": 30, "hat": 40}
+# face_acc sits above the expression so a frame draws over the eyes, and
+# below hats so a brim still falls in front of it.
+SLOTS = {"bottom": 10, "top": 20, "face": 30, "face_acc": 35, "hat": 40}
 
 # Two characters, same canvas and registration. Each item may have art per
 # character; where it doesn't, see FITS_BOTH below.
@@ -38,7 +40,7 @@ CHARACTERS = [
 # body and hairline, so a borrowed one sits a little wide and may show a gap
 # where the original character's hair used to be. Add per-character art —
 # item_<name>_male.png — and it takes over automatically, no config change.
-FITS_BOTH = {"bottom", "top", "hat"}
+FITS_BOTH = {"bottom", "top", "hat", "face_acc"}
 
 # unlockAt is the number of entries needed before an item can be worn. The
 # starter set is all 0 — everything available from day one. The gating still
@@ -72,6 +74,7 @@ ITEMS = [
     ("cargo_pants",     "bottom", "Cargo Pants",        "工裝褲",         0),
     ("chino_shorts",    "bottom", "Chino Shorts",       "卡其短褲",       0),
     ("pyjama_pants",    "bottom", "Pyjama Pants",       "睡褲",           0),
+    ("roundglasses",    "face_acc", "Round Glasses",    "圓框眼鏡",       0),
     ("male_cap",        "hat",    "Baseball Cap",       "棒球帽", 0),
     ("male_gakuran",    "top",    "Gakuran Jacket",     "學生外套", 0),
     ("male_bomber",     "top",    "Bomber Jacket",      "飛行外套", 0),
