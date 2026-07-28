@@ -407,6 +407,22 @@
       ]
     },
     {
+      "id": "gakuran_pants",
+      "slot": "bottom",
+      "label": "Uniform Trousers",
+      "label_zh": "\u5b78\u751f\u8932",
+      "unlockAt": 0,
+      "icon": "icon_gakuran_pants.png",
+      "layer": {
+        "girl": "item_gakuran_pants.png",
+        "boy": "item_gakuran_pants_male.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
       "id": "roundglasses",
       "slot": "face_acc",
       "label": "Round Glasses",
@@ -584,5 +600,5 @@
       "color": "#3ea56a"
     }
   ],
-  "build": "1b858e7678"
+  "build": "a2567f441f"
 }

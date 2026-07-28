@@ -74,6 +74,7 @@ ITEMS = [
     ("cargo_pants",     "bottom", "Cargo Pants",        "工裝褲",         0),
     ("chino_shorts",    "bottom", "Chino Shorts",       "卡其短褲",       0),
     ("pyjama_pants",    "bottom", "Pyjama Pants",       "睡褲",           0),
+    ("gakuran_pants",   "bottom", "Uniform Trousers",   "學生褲",         0),
     ("roundglasses",    "face_acc", "Round Glasses",    "圓框眼鏡",       0),
     ("squareglasses",   "face_acc", "Square Glasses",   "方框眼鏡",       0),
     ("heartglasses",    "face_acc", "Heart Glasses",    "心形眼鏡",       0),
