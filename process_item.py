@@ -546,7 +546,13 @@ DARK_OVERRIDES = {"male_gakuran": 55, "sailor": 55, "male_tie_shirt": 55,
                   # there — so the fill was still counted as line art and the
                   # trousers came out full of holes. His render is lighter and
                   # the automatic step handles it, hence only hers is listed.
-                  "gakuran_pants": 50}
+                  "gakuran_pants": 50,
+                  # Fourth navy garment, same story, and this one fails loudly
+                  # rather than quietly: the automatic step lowers itself to 105,
+                  # still above the fill at 93, and the run aborts with no item
+                  # regions at all. The gap it has to land in is wide — the real
+                  # ink's 95th percentile is 40, the navy's 5th is 63.
+                  "skirt_navy": 50}
 
 
 if __name__ == "__main__":

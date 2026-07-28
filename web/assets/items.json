@@ -170,6 +170,23 @@
       "hairMask": {}
     },
     {
+      "id": "vest",
+      "slot": "top",
+      "label": "School Vest",
+      "label_zh": "\u5b78\u751f\u80cc\u5fc3",
+      "unlockAt": 0,
+      "icon": "icon_vest.png",
+      "layer": {
+        "girl": "item_vest.png",
+        "boy": "item_vest_male.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ],
+      "hairMask": {}
+    },
+    {
       "id": "male_gakuran",
       "slot": "top",
       "label": "Gakuran Jacket",
@@ -348,6 +365,23 @@
       "layer": {
         "girl": "item_cargo_pants.png",
         "boy": "item_cargo_pants.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ],
+      "hairMask": {}
+    },
+    {
+      "id": "skirt_navy",
+      "slot": "bottom",
+      "label": "Navy Pleated Skirt",
+      "label_zh": "\u85cf\u9752\u767e\u8936\u88d9",
+      "unlockAt": 0,
+      "icon": "icon_skirt_navy.png",
+      "layer": {
+        "girl": "item_skirt_navy.png",
+        "boy": "item_skirt_navy.png"
       },
       "fits": [
         "boy",
@@ -702,5 +736,5 @@
       }
     }
   ],
-  "build": "e905a8c477"
+  "build": "bc9209c2d7"
 }
