@@ -154,8 +154,10 @@ h1 { font-size: 26px; margin: 0; letter-spacing: -0.02em; }
    amounts — so the volume looks preserved and it reads as a squash rather than
    as a resize.
 
-   Tempo and depth carry the mood rather than just decorating it — 超正 pumps
-   deep and quick, 好差 barely stirs.
+   Depth still carries the mood — 超正 pumps deep, 好差 barely stirs — but the
+   tempo is now three steps rather than five: the two low moods share one, the
+   two middling ones share another, and 超正 gets its own. Five distinct speeds
+   read as five arbitrary speeds; grouped, the change of pace is legible.
 
    Only the today stage and the calendar's open entry move. The entry list draws
    a character per row and the calendar one per day, and a page of them all
@@ -179,7 +181,7 @@ h1 { font-size: 26px; margin: 0; letter-spacing: -0.02em; }
 .stage .char, .entry-char {
   --sq-x: 1.015;
   --sq-y: 0.985;
-  --sq-time: 1.8s;
+  --sq-time: 1.35s;        /* 一般, matched to 唔錯 */
   --neck: 55%;              /* girl: hair ends here and the silhouette pinches */
 }
 .stage .char[data-character="boy"], .entry-char[data-character="boy"] {
@@ -199,10 +201,10 @@ h1 { font-size: 26px; margin: 0; letter-spacing: -0.02em; }
 }
 /* "rad" is the top mood's key; the art file is face_happy.png, which does not
    match, so keying off the filename here would silently do nothing. */
-.stage .char[data-mood="rad"],   .entry-char[data-mood="rad"]   { --sq-x: 1.025; --sq-y: 0.975; --sq-time: 1s;    }
+.stage .char[data-mood="rad"],   .entry-char[data-mood="rad"]   { --sq-x: 1.025; --sq-y: 0.975; --sq-time: 0.85s; }
 .stage .char[data-mood="good"],  .entry-char[data-mood="good"]  { --sq-x: 1.02;  --sq-y: 0.98;  --sq-time: 1.35s; }
 .stage .char[data-mood="bad"],   .entry-char[data-mood="bad"]   { --sq-x: 1.009; --sq-y: 0.991; --sq-time: 2.5s;  }
-.stage .char[data-mood="awful"], .entry-char[data-mood="awful"] { --sq-x: 1.006; --sq-y: 0.994; --sq-time: 3.2s;  }
+.stage .char[data-mood="awful"], .entry-char[data-mood="awful"] { --sq-x: 1.006; --sq-y: 0.994; --sq-time: 2.5s;  }
 
 /* A character that never stops moving is exactly what this setting is for. */
 @media (prefers-reduced-motion: reduce) {
