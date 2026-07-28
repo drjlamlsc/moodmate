@@ -191,6 +191,33 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
     r, g, b, al = render.split()
     render = Image.merge("RGBA", (r, g, b, al.filter(ImageFilter.MinFilter(3))))
 
+    # Some renders have nothing to diff against. The geta arrive on a figure
+    # already wearing the yukata, because a wooden sandal is only ever drawn
+    # with one: diffing that against the bare master would hand back the whole
+    # outfit. So for these the render below a measured row IS the layer — feet,
+    # sandals and all, exactly as drawn. It works because the row sits under
+    # every garment: the layer's top edge is covered by whatever is worn above
+    # it, and the base's own feet are wider-covered by the art that replaces
+    # them. Everything below is honest artwork; nothing above it is kept.
+    if name in AS_DRAWN:
+        cut = AS_DRAWN[name]
+        a = np.array(render).astype(int)
+        a[:cut, :, 3] = 0
+        kept = int((a[..., 3] > 10).sum())
+        Image.fromarray(a.astype("uint8")).save(
+            os.path.join(here, "items", "item_%s.png" % name))
+        print("as drawn: kept %d px below y=%d, no extraction" % (kept, cut))
+        supplied = os.path.splitext(render_path)[0] + "_icon.png"
+        if os.path.exists(supplied):
+            icon = standalone_icon(supplied)
+            icon.save(os.path.join(here, "items", "icon_%s.png" % name))
+            print("icon: used supplied %s %s" % (os.path.basename(supplied), icon.size))
+        worn = Image.alpha_composite(master, Image.open(
+            os.path.join(here, "items", "item_%s.png" % name)))
+        Image.alpha_composite(Image.new("RGBA", master.size, (255, 0, 255, 255)), worn) \
+             .save(os.path.join(here, "qa", "%s_worn.png" % name))
+        return
+
     M = np.array(master).astype(int)
     T = np.array(render).astype(int)
     h, w = M.shape[:2]
@@ -556,6 +583,13 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
 # from the fabric's own colour rather than guessed, and set low enough to keep
 # the hem's outline, which is drawn below the last fabric pixel.
 HEM_TRIM = {"yukata": 903, "yukata_male": 896, "sundress": 842}
+
+# Items taken from the render as drawn, with the row to cut at. The row is the
+# bottom of the yukata's hem in that same render (928 and 923), plus one: above
+# it the render is garment, below it is foot and sandal. The trimmed yukata
+# layer stops higher, at 903 and 896, so a little bare shin shows between hem
+# and sandal — which is what a person in a yukata looks like.
+AS_DRAWN = {"geta": 929, "geta_male": 924}
 
 ACCESSORIES = {"roundglasses"}
 

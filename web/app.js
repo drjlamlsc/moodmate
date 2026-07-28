@@ -674,6 +674,26 @@ function repaintChars() {
 // but not a hairline, so an item only draws when art exists for that character.
 // True when the item worn on top is a one-piece — a dress, which has to sit in
 // the top slot to composite over bottoms, and so has to suppress them itself.
+// An item may name another it has to be worn with — the geta, which belong to
+// the yukata and read as a mistake with anything else. Unmet, it is not offered
+// at all rather than offered and ignored.
+function requirementMet(it, outfit) {
+  if (!it || !it.requires) return true;
+  const need = state.manifest.items.find((i) => i.id === it.requires);
+  return !!need && outfit[need.slot] === need.id;
+}
+
+// Called after every outfit change, not during a render: taking off the yukata
+// has to take the geta off with it, or the shoes slot keeps something the
+// closet is no longer showing and the character wears sandals with jeans.
+function dropUnmetRequirements(outfit) {
+  for (const slot of Object.keys(outfit)) {
+    if (slot === "hair" || !outfit[slot]) continue;
+    const it = state.manifest.items.find((i) => i.id === outfit[slot]);
+    if (!requirementMet(it, outfit)) outfit[slot] = null;
+  }
+}
+
 function coversBottom(topId) {
   if (!topId) return false;
   const it = state.manifest.items.find((i) => i.id === topId);
@@ -701,7 +721,11 @@ function layersFor(mood, outfit, character) {
   // A dress covers both halves, so whatever is in the bottom slot stays
   // unworn rather than running out below the hem. The choice is kept, not
   // cleared: take the dress off and the skirt or jeans is back where it was.
-  if (outfit.shoes) push(outfit.shoes, "shoes");
+  // Guarded here as well as in the closet: an entry saved before an item grew
+  // a requirement still holds whatever it held.
+  if (outfit.shoes && requirementMet(m.items.find((i) => i.id === outfit.shoes), outfit)) {
+    push(outfit.shoes, "shoes");
+  }
   if (outfit.bottom && !coversBottom(outfit.top)) push(outfit.bottom, "bottom");
   if (outfit.top) push(outfit.top, "top");
   const mo = m.moods.find((x) => x.key === mood);
@@ -1685,7 +1709,8 @@ function renderCloset() {
     // Only what this character has art for. Anything else would render as
     // nothing at all, which reads as a broken item rather than an absent one.
     const items = state.manifest.items.filter(
-      (i) => i.slot === slot && i.fits.includes(state.character));
+      (i) => i.slot === slot && i.fits.includes(state.character)
+             && requirementMet(i, state.outfit));
     if (!items.length) continue;
     // <details> rather than a hand-rolled toggle: it collapses without script,
     // and carries the keyboard and screen-reader behaviour a div with a click
@@ -1729,7 +1754,11 @@ function renderCloset() {
     none.className = "card none-card";
     none.textContent = t("none");
     none.setAttribute("aria-pressed", String(!state.outfit[slot]));
-    none.onclick = () => { state.outfit[slot] = null; save(); renderCloset(); renderToday(); };
+    none.onclick = () => {
+      state.outfit[slot] = null;
+      dropUnmetRequirements(state.outfit);
+      save(); renderCloset(); renderToday();
+    };
     grid.appendChild(none);
 
     for (const it of items) {
@@ -1753,6 +1782,7 @@ function renderCloset() {
       } else {
         card.onclick = () => {
           state.outfit[slot] = state.outfit[slot] === it.id ? null : it.id;
+          dropUnmetRequirements(state.outfit);
           save(); renderCloset(); renderToday();
         };
       }

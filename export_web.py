@@ -87,6 +87,7 @@ ITEMS = [
     ("gakuran_pants",   "bottom", "Uniform Trousers",   "學生褲",         0),
     ("pyjama_pants",    "bottom", "Pyjama Pants",       "睡褲",           0),
     ("sneakers",        "shoes",  "Canvas Sneakers",    "帆布鞋",         0),
+    ("geta",            "shoes",  "Wooden Geta",        "木屐",           0),
     ("roundglasses",    "face_acc", "Round Glasses",    "圓框眼鏡",       0),
     ("squareglasses",   "face_acc", "Square Glasses",   "方框眼鏡",       0),
     ("heartglasses",    "face_acc", "Heart Glasses",    "心形眼鏡",       0),
@@ -108,6 +109,12 @@ ITEMS = [
 # here, it also suppresses the bottom entirely — otherwise trouser legs run out
 # below the hem. The closet greys that section out while one is worn.
 COVERS_BOTTOM = {"sundress", "yukata"}
+
+# item -> the item that has to be worn before it is offered at all. A wooden
+# geta goes with a yukata and looks like a mistake with anything else, so the
+# closet only shows it while one is on, and takes it off when the yukata comes
+# off. The value names any item in any slot; nothing here assumes it is a top.
+REQUIRES = {"geta": "yukata"}
 
 MOODS = [
     # key      label     face layer (None = master's own face)  colour   zh
@@ -468,6 +475,7 @@ def main():
             "unlockAt": unlock, "icon": "icon_%s.png" % name,
             "layer": layers, "fits": sorted(fits), "hairMask": hairmasks,
             **({"coversBottom": True} if name in COVERS_BOTTOM else {}),
+            **({"requires": REQUIRES[name]} if name in REQUIRES else {}),
         })
 
     # App icons: the character's head on a pastel plate. Home-screen icons are

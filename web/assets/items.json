@@ -459,6 +459,24 @@
       "hairMask": {}
     },
     {
+      "id": "geta",
+      "slot": "shoes",
+      "label": "Wooden Geta",
+      "label_zh": "\u6728\u5c50",
+      "unlockAt": 0,
+      "icon": "icon_geta.png",
+      "layer": {
+        "girl": "item_geta.png",
+        "boy": "item_geta_male.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ],
+      "hairMask": {},
+      "requires": "yukata"
+    },
+    {
       "id": "roundglasses",
       "slot": "face_acc",
       "label": "Round Glasses",
@@ -771,5 +789,5 @@
       }
     }
   ],
-  "build": "72e13e0394"
+  "build": "f7937ed1cb"
 }
