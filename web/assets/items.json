@@ -294,6 +294,23 @@
       "hairMask": {}
     },
     {
+      "id": "croptop",
+      "slot": "top",
+      "label": "Crop Tee",
+      "label_zh": "\u77ed\u7248T\u6064",
+      "unlockAt": 0,
+      "icon": "icon_croptop.png",
+      "layer": {
+        "girl": "item_croptop.png",
+        "boy": "item_croptop_male.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ],
+      "hairMask": {}
+    },
+    {
       "id": "skirt_pleated",
       "slot": "bottom",
       "label": "Pleated Skirt",
@@ -668,5 +685,5 @@
       }
     }
   ],
-  "build": "f8b2c5704d"
+  "build": "5cb66151e4"
 }
