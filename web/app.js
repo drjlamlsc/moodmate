@@ -649,12 +649,15 @@ function hairCanvas(l, hex) {
 // the whole screen: a full render would drop focus out of the note field.
 function repaintChars() {
   if (!state.manifest) return;
-  const scr = document.querySelector(".screen:not([hidden])");
-  if (!scr) return;
-  if (scr.id === "screen-today") renderToday();
-  else if (scr.id === "screen-closet") renderCloset();
-  else if (scr.id === "screen-list") renderList();
-  else if (scr.id === "screen-history") renderHistory();
+  // Every screen holding a character, not just the visible one. A colour is
+  // picked in the closet, so that is the only screen the paint would reach if
+  // this followed the visible one — and switching tabs does not re-render
+  // today, so it kept showing the pre-paint fallback until something else
+  // forced a render, like choosing a mood.
+  renderToday();
+  renderCloset();
+  renderList();
+  renderHistory();
 }
 
 
