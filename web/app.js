@@ -46,6 +46,14 @@ const DEFAULT_TAGS = [
   ["outdoors", "Outdoors", "🌳", "leisure"],
 ];
 
+// Every wearable slot, plus hair. Written once: this shape is the default
+// outfit, the shape a stored one is merged onto, and the recovery value after
+// corrupt storage, and a slot added to only two of those three is a slot that
+// silently never loads.
+function emptyOutfit() {
+  return { hat: null, top: null, bottom: null, shoes: null, face_acc: null, hair: null };
+}
+
 const state = {
   // "en" | "zh". Chinese is the default for a first run; a stored preference
   // always wins, so anyone who has picked EN keeps it.
@@ -56,7 +64,7 @@ const state = {
   tags: [],                                      // {id, label, icon, group, order, archived}
   // `hair` lives here so a saved entry keeps the colour it was written with:
   // entries snapshot the whole outfit object, so it needs no field of its own.
-  outfit: { hat: null, top: null, bottom: null, face_acc: null, hair: null },
+  outfit: emptyOutfit(),
   // Which closet sections are collapsed. Holds the closed ones, not the open
   // ones, so the empty default means everything shows — a new slot added later
   // appears rather than hiding until someone finds it.
@@ -96,8 +104,8 @@ function load() {
     // Only absent storage gets the default; someone who took the hoodie off
     // has made a choice, and reload shouldn't undo it.
     state.outfit = raw.outfit
-      ? Object.assign({ hat: null, top: null, bottom: null, face_acc: null, hair: null }, raw.outfit)
-      : { hat: null, top: "hoodie", bottom: null, face_acc: null, hair: null };
+      ? Object.assign(emptyOutfit(), raw.outfit)
+      : Object.assign(emptyOutfit(), { top: "hoodie" });
     state.tags = Array.isArray(raw.tags) && raw.tags.length ? raw.tags : seedTags();
     if (raw.lang === "en" || raw.lang === "zh") state.lang = raw.lang;
     if (raw.theme === "light" || raw.theme === "dark") state.theme = raw.theme;
@@ -118,7 +126,7 @@ function load() {
     /* Corrupt or unreadable storage shouldn't brick the app; start fresh
        rather than throwing before the first render. */
     state.tags = seedTags();
-    state.outfit = { hat: null, top: "hoodie", bottom: null, face_acc: null, hair: null };
+    state.outfit = Object.assign(emptyOutfit(), { top: "hoodie" });
   }
 }
 
@@ -693,6 +701,7 @@ function layersFor(mood, outfit, character) {
   // A dress covers both halves, so whatever is in the bottom slot stays
   // unworn rather than running out below the hem. The choice is kept, not
   // cleared: take the dress off and the skirt or jeans is back where it was.
+  if (outfit.shoes) push(outfit.shoes, "shoes");
   if (outfit.bottom && !coversBottom(outfit.top)) push(outfit.bottom, "bottom");
   if (outfit.top) push(outfit.top, "top");
   const mo = m.moods.find((x) => x.key === mood);
@@ -764,8 +773,10 @@ function layerNode(l) {
 function headChip(mood, tight, character) {
   const wrap = document.createElement("div");
   wrap.className = "head" + (tight ? " tight" : "");
-  for (const l of layersFor(mood, { hat: null, top: null, bottom: null,
-                                    hair: state.outfit.hair }, character)) {
+  // Nothing worn but the hair colour: the chip is cropped to the head, so a
+  // garment would cost a layer to draw and never appear.
+  for (const l of layersFor(mood, Object.assign(emptyOutfit(), { hair: state.outfit.hair }),
+                            character)) {
     wrap.appendChild(layerNode(l));
   }
   return wrap;
@@ -1661,7 +1672,8 @@ function renderCloset() {
   // Clothes first, accessories after: tops and bottoms are what gets changed
   // most, and they were sitting below two accessory sections that are picked
   // once and left alone.
-  for (const [slot, title] of [["top", "tops"], ["bottom", "bottoms"], ["face_acc", "faceAcc"], ["hat", "head"]]) {
+  for (const [slot, title] of [["top", "tops"], ["bottom", "bottoms"], ["shoes", "shoes"],
+                               ["face_acc", "faceAcc"], ["hat", "head"]]) {
     // Only what this character has art for. Anything else would render as
     // nothing at all, which reads as a broken item rather than an absent one.
     const items = state.manifest.items.filter(
@@ -1747,7 +1759,7 @@ function setCharacter(id) {
   state.character = id;
   // Slots holding an item this body has no art for would silently render as
   // nothing, so clear them rather than leave an invisible "worn" item.
-  for (const slot of ["hat", "face_acc", "top", "bottom"]) {
+  for (const slot of ["hat", "face_acc", "top", "bottom", "shoes"]) {
     const worn = state.outfit[slot];
     if (!worn) continue;
     const it = state.manifest.items.find((i) => i.id === worn);

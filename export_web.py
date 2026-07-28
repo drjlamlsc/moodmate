@@ -26,7 +26,10 @@ ICON_PX = 192      # closet thumbnails
 # cover it, and below hats so a brim falls over the brow correctly.
 # face_acc sits above the expression so a frame draws over the eyes, and
 # below hats so a brim still falls in front of it.
-SLOTS = {"bottom": 10, "top": 20, "face": 30, "face_acc": 35, "hat": 40}
+# Shoes sit below bottoms, not above: a long trouser leg falls over the top of
+# a shoe, and drawing the shoe over the hem would put the foot outside the
+# trouser. Skirts and shorts end well above the ankle, so nothing is lost.
+SLOTS = {"shoes": 5, "bottom": 10, "top": 20, "face": 30, "face_acc": 35, "hat": 40}
 
 # Two characters, same canvas and registration. Each item may have art per
 # character; where it doesn't, see FITS_BOTH below.
