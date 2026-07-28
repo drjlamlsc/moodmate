@@ -144,7 +144,7 @@ def save(img, path, px):
 HAIR_BANDS = {"girl": [185, 232], "boy": [160, 205]}
 
 
-def write_hair_mask(mask, art_path, out_path):
+def write_hair_mask(mask, art_path, out_path, anchor=None):
     """Resize a 1024px hair mask to match the exported art, and close the fringe.
 
     The art is resampled to CHAR_PX with LANCZOS, which overshoots *lighter*
@@ -166,6 +166,35 @@ def write_hair_mask(mask, art_path, out_path):
     solid = art[..., 3] > 10
     lum = art[..., :3].mean(axis=2)
     m = morph(m, "dilate", 1) & solid & (lum >= 110)
+
+    # Specks. The eye's iris is a grey-lavender inside the same luminance band
+    # as the hair, so a few pixels of each eye come through, and with red hair
+    # they are red pixels in the middle of a pupil. The camisole picks up a
+    # scatter the same way. Size alone will not do it: a fringe tip is as small
+    # as an eye speck. Distance will — hair grows off hair, so a real strand tip
+    # sits within a few pixels of the main mass, while an eye is marooned in the
+    # middle of a face. Measured across all fifteen masks, every genuine piece
+    # is within 10px and every speck is beyond 12.
+    # A mood's face layer redraws the eyes as well as the bangs, and on the
+    # crying face the iris is a lavender-grey that passes the same violet test
+    # the hair does — 379px of it, far too big to be a speck, so with red hair
+    # the pupils came out red. Anchoring fixes what size cannot: hair grows out
+    # of hair, so a strand drawn on a face layer touches the body's own hair,
+    # while an eye is marooned in the middle of a face. Measured across all
+    # eight face masks, every genuine piece touches the anchor and every eye
+    # sits 11 to 16px away.
+    from process_item import components
+    lab, comps = components(m)
+    if comps:
+        main = lab == comps[0][0] if anchor is None else anchor
+        reach = 12 if anchor is None else 8
+        near = morph(main, "dilate", reach)
+        for cid, n in comps:
+            if anchor is None and (n >= 60 or (lab == cid).__and__(main).any()):
+                continue
+            reg = lab == cid
+            if not (reg & near).any():
+                m &= ~reg
     Image.fromarray(np.where(m, 255, 0).astype("uint8"), "L").save(out_path, optimize=True)
     return os.path.getsize(out_path)
 
@@ -377,6 +406,7 @@ def main():
     total = 0
 
     base = None
+    base_masks = {}
     for cid, clabel, clabel_zh, master, out_name, prefix in CHARACTERS:
         src = os.path.join(HERE, master)
         if not os.path.exists(src):
@@ -395,6 +425,10 @@ def main():
         mask_name = out_name.replace(".png", "_hair.png")
         total += write_hair_mask(hair_mask(src), os.path.join(OUT, out_name),
                                  os.path.join(OUT, mask_name))
+        # Kept for the mood faces below: hair on a face layer grows out of the
+        # hair on the body, so the body's own mask says where hair can be.
+        base_masks[cid] = np.array(
+            Image.open(os.path.join(OUT, mask_name)).convert("L")) > 128
 
         manifest["characters"].append(
             {"id": cid, "label": clabel, "label_zh": clabel_zh, "base": out_name,
@@ -422,7 +456,8 @@ def main():
                 fmask = "%s_hair.png" % fname
                 total += write_hair_mask(face_hair_mask(src),
                                          os.path.join(OUT, "%s.png" % fname),
-                                         os.path.join(OUT, fmask))
+                                         os.path.join(OUT, fmask),
+                                         anchor=base_masks.get(cid))
                 entry.setdefault("hairMask", {})[cid] = fmask
         manifest["moods"].append(entry)
 

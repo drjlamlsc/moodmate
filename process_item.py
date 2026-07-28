@@ -584,12 +584,14 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
 # the hem's outline, which is drawn below the last fabric pixel.
 HEM_TRIM = {"yukata": 903, "yukata_male": 896, "sundress": 842}
 
-# Items taken from the render as drawn, with the row to cut at. The row is the
-# bottom of the yukata's hem in that same render (928 and 923), plus one: above
-# it the render is garment, below it is foot and sandal. The trimmed yukata
-# layer stops higher, at 903 and 896, so a little bare shin shows between hem
-# and sandal — which is what a person in a yukata looks like.
-AS_DRAWN = {"geta": 929, "geta_male": 924}
+# Items taken from the render as drawn, with the row to cut at: exactly where
+# the yukata layer's own HEM_TRIM stops, so the two meet with no gap and no
+# overlap. Everything below that row is kept untouched — hem, foot, sandal —
+# and nothing is picked out of it. That is the point: the render already shows
+# a foot standing in a sandal, and any attempt to keep one and not the other
+# left a seam, because the base's foot underneath differs from this one by a
+# median of 91. Kept whole, the layer simply covers the base's foot stubs.
+AS_DRAWN = {"geta": 903, "geta_male": 896}
 
 ACCESSORIES = {"roundglasses"}
 
