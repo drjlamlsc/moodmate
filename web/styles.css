@@ -138,6 +138,49 @@ h1 { font-size: 26px; margin: 0; letter-spacing: -0.02em; }
   image-rendering: auto;
 }
 
+/* Idle squash. transform only: it is composited on the GPU, so the whole stack
+   of registered layers scales as one texture with no layout or paint per frame.
+   Animating width or height would relayout the stage sixty times a second.
+
+   transform-origin sits at the bottom so the character squashes down onto its
+   feet. Scaled about the centre it would shrink in place, which reads as
+   receding rather than as weight. The origin is the foot of the 1024 canvas
+   rather than the soles themselves, a little below them, which lifts the feet
+   by well under a pixel at these amplitudes.
+
+   The two axes go opposite ways — shorter and wider by roughly matching
+   amounts — so the volume looks preserved and it reads as a squash rather than
+   as a resize.
+
+   Tempo and depth carry the mood rather than just decorating it — 超正 pumps
+   deep and quick, 好差 barely stirs. Only the two large previews animate; the
+   entry list draws a character per row and the calendar one per day, and a
+   page of them all moving at once is both costly while scrolling and a lot to
+   look at. */
+@keyframes squash {
+  from, to { transform: scale(1, 1); }
+  50%      { transform: scale(var(--sq-x), var(--sq-y)); }
+}
+.stage .char, .entry-char {
+  --sq-x: 1.03;
+  --sq-y: 0.97;
+  --sq-time: 3s;
+  transform-origin: 50% 100%;
+  animation: squash var(--sq-time) ease-in-out infinite;
+  will-change: transform;
+}
+/* "rad" is the top mood's key; the art file is face_happy.png, which does not
+   match, so keying off the filename here would silently do nothing. */
+.stage .char[data-mood="rad"],   .entry-char[data-mood="rad"]   { --sq-x: 1.05;  --sq-y: 0.95;  --sq-time: 1.7s; }
+.stage .char[data-mood="good"],  .entry-char[data-mood="good"]  { --sq-x: 1.04;  --sq-y: 0.96;  --sq-time: 2.2s; }
+.stage .char[data-mood="bad"],   .entry-char[data-mood="bad"]   { --sq-x: 1.018; --sq-y: 0.982; --sq-time: 4.2s; }
+.stage .char[data-mood="awful"], .entry-char[data-mood="awful"] { --sq-x: 1.012; --sq-y: 0.988; --sq-time: 5.5s; }
+
+/* A character that never stops moving is exactly what this setting is for. */
+@media (prefers-reduced-motion: reduce) {
+  .stage .char, .entry-char { animation: none; }
+}
+
 /* head-only crop, used for the mood chips. The percentages come from where
    the head sits on the 1024 registration canvas — see export_web.py. */
 .head {

@@ -549,6 +549,10 @@ function layersFor(mood, outfit, character) {
 }
 
 function renderChar(el, mood, outfit, character) {
+  // Drives how the idle bob is tuned, in CSS. It goes on the container, which
+  // survives this function; the layers below are replaced on every change of
+  // clothes, so an animation on them would restart mid-bob each time.
+  el.dataset.mood = mood || "meh";
   el.innerHTML = "";
   for (const l of layersFor(mood, outfit, character)) {
     const img = new Image();
