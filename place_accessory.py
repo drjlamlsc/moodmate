@@ -20,8 +20,11 @@ expression then showed 一般 eyes behind the lenses.
 A standalone drawing has no eyes in it to capture. So take the drawing as the
 truth and place it, instead of trying to recover it from a contaminated render.
 Placement is exact rather than eyeballed: the two lens interiors are found as
-enclosed white regions, and the similarity transform that maps their centres
-onto the character's eyes is solved from those two point pairs.
+regions sealed inside the drawing's own keyline, and the similarity transform
+that maps their centres onto the character's eyes is solved from those two
+point pairs. Finding them by keyline rather than by whiteness is what lets a
+tinted pair register too — sunglasses need the same two anchors, and are the
+one style where the lens must stay opaque.
 
 The eye anchors are measured, not guessed — the centroid of eye ink across all
 ten faces (five moods x two characters) sits within 8px horizontally and 16px
@@ -30,7 +33,7 @@ vertically, so one placement serves every expression and both bodies.
 import sys, os
 import numpy as np
 from PIL import Image, ImageFilter
-from process_item import outside, components
+from process_item import outside, components, morph
 
 # Centre of each eye, not the centroid of its ink. The first attempt used the
 # ink centroid and sat the glasses ~13px high, because the brow and the heavy
@@ -50,28 +53,81 @@ EYE_R = (596.0, 391.0)
 NUDGE = (-9.0, 2.0)
 CANVAS = 1024
 PLATE_LEVEL, PLATE_CHROMA = 242, 12
+INK_LEVEL = 110        # the drawing's own keyline, used as the wall
 
 
 def cut_plate(path):
-    """Drawing -> RGBA with the background AND the lens interiors transparent."""
+    """Drawing -> RGBA with the background, and any *clear* lens, transparent.
+
+    Lenses are found as regions sealed inside the drawing's own dark keyline,
+    not as white areas. Looking for white would only ever find clear lenses,
+    and sunglasses are exactly the case where the lens must stay opaque — the
+    frame still has to be registered by the same two anchors.
+
+    Which pair is the lenses is decided by shape, not size: a chunky frame can
+    enclose more area than the glass it holds. The lenses are the two regions
+    that are alike in area, level with each other and well apart, which no
+    other pair of regions in a pair of spectacles is.
+    """
     a = np.array(Image.open(path).convert("RGB")).astype(int)
-    plate = (a.min(axis=2) >= PLATE_LEVEL) & ((a.max(axis=2) - a.min(axis=2)) <= PLATE_CHROMA)
+    lum = a.mean(axis=2)
+    chroma = a.max(axis=2) - a.min(axis=2)
+    plate = (a.min(axis=2) >= PLATE_LEVEL) & (chroma <= PLATE_CHROMA)
     bg = plate & outside(~plate)
-    enclosed = plate & ~bg          # white sealed inside the drawing = the lenses
-    lab, comps = components(enclosed)
 
-    lenses = [(cid, n) for cid, n in comps if n > 200]
-    if len(lenses) < 2:
-        sys.exit("FAIL: found %d enclosed regions, need 2 lenses to register by. "
-                 "Is the frame drawn as closed rings?" % len(lenses))
+    ink = (~bg) & (lum < INK_LEVEL)
+    interior = ~morph(ink, "dilate", 2)
+    interior &= ~outside(morph(ink, "dilate", 2))
+    lab, comps = components(interior)
 
-    centres = []
-    for cid, _ in lenses[:2]:
+    cands = []
+    for cid, n in comps[:10]:
+        if n < 200:
+            break
         ys, xs = np.nonzero(lab == cid)
-        centres.append((xs.mean(), ys.mean()))
-    centres.sort()
+        cands.append({"cid": cid, "n": n, "x": xs.mean(), "y": ys.mean(),
+                      "lum": float(np.median(lum[lab == cid]))})
 
-    rgba = np.dstack([a, np.where(bg | enclosed, 0, 255)]).astype("uint8")
+    best, pair = None, None
+    for i in range(len(cands)):
+        for j in range(i + 1, len(cands)):
+            p, q = cands[i], cands[j]
+            if abs(p["y"] - q["y"]) > 25 or abs(p["x"] - q["x"]) < 100:
+                continue
+            ratio = min(p["n"], q["n"]) / max(p["n"], q["n"])
+            if ratio < 0.7:
+                continue
+            score = (p["n"] + q["n"]) * ratio
+            if best is None or score > best:
+                best, pair = score, (p, q)
+
+    if pair is None:
+        sys.exit("FAIL: could not find two lens regions to register by. The rim "
+                 "must fully enclose each lens — half-rim and rimless frames "
+                 "have no enclosed region, and a gap lets it leak to the edge.")
+
+    centres = sorted([(p["x"], p["y"]) for p in pair])
+
+    # Clear glass drops out so the eyes show through; a tinted lens stays.
+    #
+    # Detection and clearing need different regions. The keyline interior above
+    # is eroded 2px by the dilation that seals the walls, so clearing it would
+    # leave a white ring inside each rim — measured at ~500px per pair. Clear
+    # the white area itself instead, picked as the plate region that overlaps
+    # the detected lens, which runs right up to the frame.
+    wlab, wcomps = components(plate & ~bg)
+    clear = np.zeros(lum.shape, bool)
+    for p in pair:
+        if p["lum"] < PLATE_LEVEL:
+            print("lens is tinted (median luminance %.0f), keeping it opaque" % p["lum"])
+            continue
+        here = lab == p["cid"]
+        for cid, _ in wcomps:
+            if (wlab == cid)[here].any():
+                clear |= wlab == cid
+                break
+
+    rgba = np.dstack([a, np.where(bg | clear, 0, 255)]).astype("uint8")
     return Image.fromarray(rgba), centres
 
 
