@@ -69,6 +69,11 @@ PLATE_LEVEL, PLATE_CHROMA = 242, 12
 # rejects the level rather than the level being trusted.
 INK_LEVELS = (110, 60, 30, 18, 10)
 
+# What a tinted lens is worth. Not 255: sunglasses would otherwise be the one
+# item that hides the expression the app exists to record.
+LENS_ALPHA = 140
+TINT_TOL = 40          # a lens is a flat fill, so this only has to clear noise
+
 
 def cut_plate(path):
     """Drawing -> RGBA with the background, and any *clear* lens, transparent.
@@ -156,18 +161,39 @@ def cut_plate(path):
     # the detected lens, which runs right up to the frame.
     wlab, wcomps = components(plate & ~bg)
     clear = np.zeros(lum.shape, bool)
+    tinted = np.zeros(lum.shape, bool)
     for p in pair:
-        if p["lum"] < PLATE_LEVEL:
-            print("lens is tinted (median luminance %.0f), keeping it opaque" % p["lum"])
-            continue
         here = lab == p["cid"]
+        if p["lum"] < PLATE_LEVEL:
+            # A tinted lens is not cleared but not left flat either: at
+            # LENS_ALPHA the eyes read through it, which matters because
+            # expression is what the whole app is about and an opaque lens is
+            # the only garment that hides it.
+            #
+            # Same erosion problem as the clear case, so the same remedy: grow
+            # the region back out by colour. The lens is a flat fill, so the
+            # pixels within TINT_TOL of its median that touch it are the lens
+            # and stop at the keyline, which is far darker than the tolerance.
+            med = np.median(a[here], axis=0)
+            near = (np.abs(a - med).max(axis=2) <= TINT_TOL) & ~bg
+            nlab, ncomps = components(near)
+            for cid, _ in ncomps:
+                if (nlab == cid)[here].any():
+                    tinted |= nlab == cid
+                    break
+            print("lens is tinted (median luminance %.0f), alpha %d"
+                  % (p["lum"], LENS_ALPHA))
+            continue
         for cid, _ in wcomps:
             if (wlab == cid)[here].any():
                 clear |= wlab == cid
                 break
 
-    rgba = np.dstack([a, np.where(bg | clear, 0, 255)]).astype("uint8")
-    return Image.fromarray(rgba), centres
+    alpha = np.where(bg | clear, 0, 255)
+    alpha[tinted] = LENS_ALPHA
+    rgba = np.dstack([a, alpha]).astype("uint8")
+    lens = Image.fromarray((tinted * 255).astype("uint8"))
+    return Image.fromarray(rgba), centres, lens
 
 
 def similarity(src, dst):
@@ -187,7 +213,7 @@ def main(path, name):
     for d in ("items", "qa"):
         os.makedirs(os.path.join(here, d), exist_ok=True)
 
-    art, centres = cut_plate(path)
+    art, centres, lensplate = cut_plate(path)
     print("lens centres in the drawing: (%.0f, %.0f) and (%.0f, %.0f)"
           % (centres[0][0], centres[0][1], centres[1][0], centres[1][1]))
 
@@ -202,11 +228,24 @@ def main(path, name):
     ia, ib = a / det, b / det
     inv = (ia, ib, -(ia * tx + ib * ty), -ib, ia, -(-ib * tx + ia * ty))
     placed = art.transform((CANVAS, CANVAS), Image.AFFINE, inv, resample=Image.BICUBIC)
+    lensmask = lensplate.transform((CANVAS, CANVAS), Image.AFFINE, inv, resample=Image.BICUBIC)
 
     # 1px choke: resampling a hard alpha edge leaves a translucent fringe that
     # reads as a halo once the frame sits over skin.
+    #
+    # The lens is held opaque while the filter runs, then put back. A darkest
+    # -neighbour filter sees the semi-transparent lens as an edge and pulls that
+    # value a pixel into the rim beside it, drawing a translucent line around
+    # the inside of every tinted frame. Masking it off is what avoids that;
+    # binarising the silhouette instead also avoids it but throws away the
+    # partial-alpha edges the choke exists to pull down, which measured as
+    # ~1000px of halo returning on each of the three clear pairs.
     r, g, bl, al = placed.split()
-    placed = Image.merge("RGBA", (r, g, bl, al.filter(ImageFilter.MinFilter(3))))
+    arr = np.array(al).astype(int)
+    lens = np.array(lensmask) > 128
+    ref = Image.fromarray(np.where(lens, 255, arr).astype("uint8"))
+    arr = np.minimum(arr, np.array(ref.filter(ImageFilter.MinFilter(3))))
+    placed = Image.merge("RGBA", (r, g, bl, Image.fromarray(arr.astype("uint8"))))
     placed.save(os.path.join(here, "items", "item_%s.png" % name))
 
     arr = np.array(placed)
