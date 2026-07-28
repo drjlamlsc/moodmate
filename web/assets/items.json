@@ -41,7 +41,7 @@
       "icon": "icon_beanie.png",
       "layer": {
         "girl": "item_beanie.png",
-        "boy": "item_beanie.png"
+        "boy": "item_beanie_male.png"
       },
       "fits": [
         "boy",
@@ -668,5 +668,5 @@
       }
     }
   ],
-  "build": "48f2f7629a"
+  "build": "f8b2c5704d"
 }
