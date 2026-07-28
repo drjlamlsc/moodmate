@@ -67,6 +67,7 @@ ITEMS = [
     ("turtleneck",      "top",    "Turtleneck",         "樽領毛衣",       0),
     ("denim_jacket",    "top",    "Denim Jacket",       "牛仔外套",       0),
     ("croptop",         "top",    "Crop Tee",           "短版T恤",        0),
+    ("sundress",        "top",    "Sunflower Sundress", "向日葵洋裝",     0, "girl"),
     ("skirt_pleated",   "bottom", "Pleated Skirt",      "百褶裙",         0),
     ("skirt_plaid",     "bottom", "Plaid Skirt",        "格仔裙",         0),
     ("skirt_corduroy",  "bottom", "Corduroy Skirt",     "燈芯絨裙",       0),

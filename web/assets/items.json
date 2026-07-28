@@ -311,6 +311,21 @@
       "hairMask": {}
     },
     {
+      "id": "sundress",
+      "slot": "top",
+      "label": "Sunflower Sundress",
+      "label_zh": "\u5411\u65e5\u8475\u6d0b\u88dd",
+      "unlockAt": 0,
+      "icon": "icon_sundress.png",
+      "layer": {
+        "girl": "item_sundress.png"
+      },
+      "fits": [
+        "girl"
+      ],
+      "hairMask": {}
+    },
+    {
       "id": "skirt_pleated",
       "slot": "bottom",
       "label": "Pleated Skirt",
@@ -685,5 +700,5 @@
       }
     }
   ],
-  "build": "5cb66151e4"
+  "build": "5413e7936c"
 }
