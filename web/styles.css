@@ -153,20 +153,46 @@ h1 { font-size: 26px; margin: 0; letter-spacing: -0.02em; }
    as a resize.
 
    Tempo and depth carry the mood rather than just decorating it — 超正 pumps
-   deep and quick, 好差 barely stirs. Only the two large previews animate; the
-   entry list draws a character per row and the calendar one per day, and a
-   page of them all moving at once is both costly while scrolling and a lot to
-   look at. */
+   deep and quick, 好差 barely stirs.
+
+   Only the today stage and the calendar's open entry move. The entry list draws
+   a character per row and the calendar one per day, and a page of them all
+   moving at once is both costly while scrolling and a lot to look at; the
+   closet is held still on purpose, since it is where a garment is being judged.
+   All three are simply rendered without the rig, which is what the animation
+   attaches to. */
 @keyframes squash {
   from, to { transform: scale(1, 1); }
   50%      { transform: scale(var(--sq-x), var(--sq-y)); }
+}
+/* The head keeps its size and simply rides down with the neck. The distance is
+   not tuned by eye: scaling about the bottom moves a point at height y down by
+   (1 - scaleY) * (H - y), so evaluating that at the neck is exactly how far the
+   body's clipped top edge travels. Matching it means the join never opens a gap
+   or overlaps, at any amplitude. */
+@keyframes ride {
+  from, to { transform: translateY(0); }
+  50%      { transform: translateY(calc((1 - var(--sq-y)) * (100% - var(--neck)))); }
 }
 .stage .char, .entry-char {
   --sq-x: 1.015;
   --sq-y: 0.985;
   --sq-time: 1.8s;
+  --neck: 55%;              /* girl: hair ends here and the silhouette pinches */
+}
+.stage .char[data-character="boy"], .entry-char[data-character="boy"] {
+  --neck: 50%;              /* shorter hair, so the neck shows higher up */
+}
+.rig-body, .rig-head { position: absolute; inset: 0; }
+.rig-body {
+  clip-path: inset(var(--neck) 0 0 0);
   transform-origin: 50% 100%;
   animation: squash var(--sq-time) ease-in-out infinite;
+  will-change: transform;
+}
+.rig-head {
+  clip-path: inset(0 0 calc(100% - var(--neck)) 0);
+  animation: ride var(--sq-time) ease-in-out infinite;
   will-change: transform;
 }
 /* "rad" is the top mood's key; the art file is face_happy.png, which does not
@@ -178,7 +204,7 @@ h1 { font-size: 26px; margin: 0; letter-spacing: -0.02em; }
 
 /* A character that never stops moving is exactly what this setting is for. */
 @media (prefers-reduced-motion: reduce) {
-  .stage .char, .entry-char { animation: none; }
+  .rig-body, .rig-head { animation: none; }
 }
 
 /* head-only crop, used for the mood chips. The percentages come from where

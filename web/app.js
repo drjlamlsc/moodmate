@@ -548,18 +548,42 @@ function layersFor(mood, outfit, character) {
   return out.sort((a, b) => a.z - b.z);
 }
 
-function renderChar(el, mood, outfit, character) {
-  // Drives how the idle bob is tuned, in CSS. It goes on the container, which
-  // survives this function; the layers below are replaced on every change of
-  // clothes, so an animation on them would restart mid-bob each time.
+// `rig` splits the drawing into a head and a body that animate separately, for
+// the previews big enough to be worth it. Left off, the layers are stacked flat
+// as before — the entry list draws one of these per row, and doubling its DOM
+// to animate something it never animates would be a waste.
+function renderChar(el, mood, outfit, character, rig) {
+  // Both drive the idle squash, in CSS: one picks its tempo and depth, the
+  // other where the neck is. They go on the container, which survives this
+  // function; the layers below are replaced on every change of clothes, so an
+  // animation on them would restart mid-motion each time.
   el.dataset.mood = mood || "meh";
+  el.dataset.character = character || state.character;
   el.innerHTML = "";
-  for (const l of layersFor(mood, outfit, character)) {
-    const img = new Image();
-    img.src = asset(l.src);
-    img.alt = "";
-    el.appendChild(img);
-  }
+
+  const layers = layersFor(mood, outfit, character);
+  const stack = (parent) => {
+    for (const l of layers) {
+      const img = new Image();
+      img.src = asset(l.src);
+      img.alt = "";
+      parent.appendChild(img);
+    }
+  };
+
+  if (!rig) { stack(el); return; }
+
+  // Each half holds the *whole* stack and shows its own slice of it, rather
+  // than the head and body being separate art. base.png is one image with both
+  // in it, and every cut line crosses either hair or a collar — a garment that
+  // spans the neck stays continuous this way, because both halves draw it.
+  const body = document.createElement("div");
+  body.className = "rig-body";
+  const head = document.createElement("div");
+  head.className = "rig-head";
+  stack(body);
+  stack(head);
+  el.append(body, head);
 }
 
 // `tight` crops to the face alone. At calendar size a full head crop spends
@@ -611,7 +635,8 @@ function renderToday() {
     picker.appendChild(b);
   }
 
-  renderChar(document.getElementById("char"), state.draftMood, state.outfit);
+  renderChar(document.getElementById("char"), state.draftMood, state.outfit,
+             state.character, true);
 
   const tags = document.getElementById("tags-today");
   tags.innerHTML = "";
@@ -1196,7 +1221,7 @@ function renderDetail() {
     row.className = "detail-body";
     const fig = document.createElement("div");
     fig.className = "char entry-char";
-    renderChar(fig, entry.mood, worn, who);
+    renderChar(fig, entry.mood, worn, who, true);
     const text = document.createElement("div");
     text.className = "detail-text";
     const p = document.createElement("p");
@@ -1329,6 +1354,8 @@ function renderCloset() {
   const total = Object.keys(state.entries).length;
   document.getElementById("closet-progress").textContent =
     `${total} ${t("entriesLogged")}`;
+  // Deliberately unrigged, so it holds still. The closet is where you are
+  // judging how a garment sits, and a moving figure fights that.
   renderChar(document.getElementById("char-closet"), state.draftMood || "meh",
              state.outfit, state.character);
 
