@@ -221,7 +221,13 @@ def hair_mask(master_path, dark=110):
     nape after everything else was recoloured.
 
     Regions rather than pixels, because a per-pixel test drops the highlights,
-    where red and blue meet, and the mask comes out moth-eaten.
+    where red and blue meet, and the mask comes out moth-eaten. The per-pixel
+    test is then unioned in anyway, to catch strands the regions cannot: the
+    wedge of fringe between the brows is not sealed off from the forehead, so
+    it belongs to the big face region and was rejected wholesale with it,
+    leaving one pale bit of the old colour on the 一般 face — the only mood that
+    draws no face layer of its own over it. The two rules are complementary:
+    regions get the highlights, pixels get the strays.
     """
     from process_item import components, morph, outside
     a = np.array(Image.open(master_path).convert("RGBA")).astype(int)
@@ -238,6 +244,9 @@ def hair_mask(master_path, dark=110):
         r, g, b = np.median(rgb[reg], axis=0)
         if (b - g) >= 15 and (r - g) >= 5:
             m |= reg
+    # Same test per pixel, for hair the regions missed.
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    m |= alpha & ((b - g) >= 15) & ((r - g) >= 5)
     # Grow back over the line art that sealed the regions, then trim one pixel
     # so the mask stops short of the outline rather than eating into it.
     m = morph(morph(m, "dilate", 2), "erode", 1) & alpha

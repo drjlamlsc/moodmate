@@ -5,7 +5,7 @@
 // Stamped by export_web.py from a hash of the built assets. It must change
 // whenever any asset does, because the image rule below is cache-first and a
 // cache keyed by a constant name is never invalidated.
-const CACHE = "moodmate-c95a8cc25e";
+const CACHE = "moodmate-cc5804b23c";
 const SHELL = [
   ".", "index.html", "styles.css", "app.js",
   "manifest.webmanifest", "assets/items.json",
