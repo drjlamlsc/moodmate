@@ -21,6 +21,8 @@ const STRINGS = {
   noEntries:        { en: "No entries yet — today is a good place to start.",
                       zh: "仲未有記錄 — 不如由今日開始。" },
   closePhoto:       { en: "Close",            zh: "關閉" },
+  close:            { en: "Close",            zh: "關閉" },
+  enlarge:          { en: "View larger",      zh: "放大檢視" },
 
   pullToRefresh:    { en: "Pull to refresh",  zh: "下拉更新" },
   releaseToRefresh: { en: "Release to refresh", zh: "放開即更新" },

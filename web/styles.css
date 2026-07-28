@@ -338,6 +338,13 @@ textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
   background: color-mix(in srgb, var(--mood, var(--accent)) 8%, transparent);
   border-radius: 12px;
 }
+/* Nothing else in the panel is tappable art, so it says so on press and to a
+   screen reader, without a frame that would compete with the drawing. */
+.entry-char.tappable { cursor: zoom-in; transition: transform .12s ease; }
+.entry-char.tappable:active { transform: scale(.96); }
+.entry-char.tappable:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 3px;
+}
 .mood-tag {
   display: inline-block; margin-left: 4px;
   font-size: 12px; font-weight: 700; color: var(--mood, var(--muted));
@@ -584,6 +591,22 @@ textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
   background: rgba(255, 255, 255, 0.35); cursor: pointer;
 }
 .lightbox-dots .dot.on { background: #fff; }
+
+/* The enlarged character sits on a card rather than straight on the dim: the
+   art is pale lavender with dark outlines, drawn to be seen on white. */
+.char-zoom .zoom-card {
+  background: var(--card); border-radius: 22px;
+  padding: 18px 20px 14px; text-align: center;
+  box-shadow: 0 18px 48px rgba(18, 14, 24, 0.45);
+  border-top: 4px solid var(--mood, var(--accent));
+}
+.char-zoom .zoom-char {
+  flex: none; width: min(74vw, 300px); max-width: none;
+  margin: 0 auto; border-radius: 16px;
+}
+.zoom-caption {
+  margin: 6px 0 0; font-size: 14px; font-weight: 600; color: var(--ink);
+}
 
 /* ── entry list ───────────────────────────────────────────────── */
 

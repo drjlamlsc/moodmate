@@ -67,6 +67,7 @@ const state = {
   draftTags: null,
   draftPhotos: null,                             // photo ids on the open entry
   lightbox: null,                                // {ids, i} while a photo is open
+  charZoom: null,                                // date key while a day's character is open
   viewMonth: null,                               // Date, first of the shown month
   selectedDay: null,
   editing: null,                                 // date key currently being edited
@@ -923,6 +924,68 @@ function renderLightbox() {
   box.onclick = () => { state.lightbox = null; renderLightbox(); };
 }
 
+/* The day's character, big. The thumbnail in the detail panel is 92px wide,
+   which is enough to recognise an outfit and not enough to look at one, so it
+   opens the same drawing at the size the Today screen gives it. */
+function openCharZoom(k) {
+  state.charZoom = k;
+  renderCharZoom();
+}
+
+function renderCharZoom() {
+  const box = document.getElementById("char-zoom");
+  const k = state.charZoom;
+  const entry = k && state.entries[k];
+  box.hidden = !entry;
+  box.innerHTML = "";
+  if (!entry) return;
+
+  const mood = state.manifest.moods.find((m) => m.key === entry.mood);
+  const card = document.createElement("div");
+  card.className = "zoom-card";
+  if (mood) card.style.setProperty("--mood", mood.color);
+  // Clicks inside the card are for looking, not dismissing; only the backdrop
+  // and the × close it.
+  card.onclick = (ev) => ev.stopPropagation();
+
+  const fig = document.createElement("div");
+  fig.className = "char entry-char zoom-char";
+  // Rigged, like the Today preview: at this size the idle squash is the point
+  // of looking, and the thumbnail it came from is too small to show it.
+  renderChar(fig, entry.mood, entry.outfit || state.outfit,
+             entry.character || state.character, true);
+  card.appendChild(fig);
+
+  const cap = document.createElement("p");
+  cap.className = "zoom-caption";
+  cap.textContent = prettyDate(k);
+  if (mood) {
+    const tag = document.createElement("span");
+    tag.className = "mood-tag";
+    tag.textContent = nameOf(mood);
+    cap.append(" ", tag);
+  }
+  card.appendChild(cap);
+  box.appendChild(card);
+
+  const close = document.createElement("button");
+  close.className = "lightbox-close";
+  close.type = "button";
+  close.textContent = "×";
+  close.setAttribute("aria-label", t("close"));
+  box.appendChild(close);
+  box.onclick = () => { state.charZoom = null; renderCharZoom(); };
+}
+
+// One key for whichever overlay is open. Both already close on a tap, but a
+// desktop browser is the one place this app gets a keyboard, and Escape not
+// working there reads as the overlay being stuck.
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (state.charZoom) { state.charZoom = null; renderCharZoom(); }
+  else if (state.lightbox) { state.lightbox = null; renderLightbox(); }
+});
+
 function setEntryDate(k) {
   state.entryDate = k;
   state.draftMood = null;                // let the chosen day's own mood, tags
@@ -1389,7 +1452,17 @@ function renderDetail() {
     const row = document.createElement("div");
     row.className = "detail-body";
     const fig = document.createElement("div");
-    fig.className = "char entry-char";
+    fig.className = "char entry-char tappable";
+    // A div rather than a button: renderChar fills it with positioned layers,
+    // and a button would make each of them a click target of its own on some
+    // browsers. The role and tabindex give back what the element gives up.
+    fig.setAttribute("role", "button");
+    fig.tabIndex = 0;
+    fig.setAttribute("aria-label", t("enlarge"));
+    fig.onclick = () => openCharZoom(k);
+    fig.onkeydown = (ev) => {
+      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); openCharZoom(k); }
+    };
     renderChar(fig, entry.mood, worn, who, true);
     const text = document.createElement("div");
     text.className = "detail-text";
