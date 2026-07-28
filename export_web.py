@@ -48,44 +48,49 @@ FITS_BOTH = {"bottom", "top", "hat", "face_acc"}
 # works, so later drops can be earned by keeping a streak going.
 # name, slot, label, label_zh, unlock, exclusive-to (omitted = both characters)
 # Exclusivity is a content choice, not a technical one: any item renders on any
-# body. These four were drawn on the boy, so they sit a little narrow on the
-# girl, but nothing about them is boy-only.
+# body. The male_-prefixed items are named after the body they were drawn on,
+# not a restriction: they sit a little narrow on the girl, but she can wear
+# them. Only the sundress is actually exclusive.
+#
+# The order below is the order the closet shows, one slot at a time, and it was
+# arranged by hand rather than by name or by date added — so a new item belongs
+# where it looks right among its neighbours, not simply at the end.
 ITEMS = [
-    ("beanie",          "hat",    "Pom-Pom Beanie",     "毛球冷帽",     0),
-    ("beret",           "hat",    "Rose Beret",         "玫瑰貝雷帽",     0),
-    ("cat_ears",        "hat",    "Cat Ears",           "貓耳髮箍",       0),
-    ("bow",             "hat",    "Ribbon Bow",         "緞帶蝴蝶結",     0),
-    ("flower_crown",    "hat",    "Flower Crown",       "雛菊花環",       0),
-    ("headphones",      "hat",    "Headphones",         "耳機",           0),
-    ("star_clips",      "hat",    "Star Clips",         "星星髮夾",       0),
-    ("bucket_hat",      "hat",    "Bucket Hat",         "漁夫帽",         0),
-    ("straw_hat",       "hat",    "Straw Sun Hat",      "草帽",           0),
-    ("hoodie",          "top",    "Cosy Hoodie",        "舒適衛衣",     0),
+    ("hoodie",          "top",    "Cosy Hoodie",        "舒適衛衣",       0),
     ("cardigan",        "top",    "Knit Cardigan",      "針織開衫",       0),
     ("sweater",         "top",    "Striped Sweater",    "條紋毛衣",       0),
-    ("sailor",          "top",    "Sailor Blouse",      "水手服上衣",     0),
     ("turtleneck",      "top",    "Turtleneck",         "樽領毛衣",       0),
     ("denim_jacket",    "top",    "Denim Jacket",       "牛仔外套",       0),
+    ("male_bomber",     "top",    "Bomber Jacket",      "飛行外套",       0),
+    ("sailor",          "top",    "Sailor Blouse",      "水手服上衣",     0),
+    ("male_tie_shirt",  "top",    "Shirt & Tie",        "恤衫領呔",       0),
+    ("male_gakuran",    "top",    "Gakuran Jacket",     "學生外套",       0),
     ("croptop",         "top",    "Crop Tee",           "短版T恤",        0),
     ("sundress",        "top",    "Sunflower Sundress", "向日葵洋裝",     0, "girl"),
     ("skirt_pleated",   "bottom", "Pleated Skirt",      "百褶裙",         0),
     ("skirt_plaid",     "bottom", "Plaid Skirt",        "格仔裙",         0),
-    ("skirt_corduroy",  "bottom", "Corduroy Skirt",     "燈芯絨裙",       0),
-    ("jeans",           "bottom", "Wide-Leg Jeans",     "闊腳牛仔褲",     0),
     ("joggers",         "bottom", "Joggers",            "束腳運動褲",     0),
     ("denim_shorts",    "bottom", "Denim Shorts",       "牛仔短褲",       0),
-    ("cargo_pants",     "bottom", "Cargo Pants",        "工裝褲",         0),
+    ("jeans",           "bottom", "Wide-Leg Jeans",     "闊腳牛仔褲",     0),
     ("chino_shorts",    "bottom", "Chino Shorts",       "卡其短褲",       0),
-    ("pyjama_pants",    "bottom", "Pyjama Pants",       "睡褲",           0),
+    ("skirt_corduroy",  "bottom", "Corduroy Skirt",     "燈芯絨裙",       0),
+    ("cargo_pants",     "bottom", "Cargo Pants",        "工裝褲",         0),
     ("gakuran_pants",   "bottom", "Uniform Trousers",   "學生褲",         0),
+    ("pyjama_pants",    "bottom", "Pyjama Pants",       "睡褲",           0),
     ("roundglasses",    "face_acc", "Round Glasses",    "圓框眼鏡",       0),
     ("squareglasses",   "face_acc", "Square Glasses",   "方框眼鏡",       0),
     ("heartglasses",    "face_acc", "Heart Glasses",    "心形眼鏡",       0),
     ("sunglasses",      "face_acc", "Sunglasses",       "太陽眼鏡",       0),
-    ("male_cap",        "hat",    "Baseball Cap",       "棒球帽", 0),
-    ("male_gakuran",    "top",    "Gakuran Jacket",     "學生外套", 0),
-    ("male_bomber",     "top",    "Bomber Jacket",      "飛行外套", 0),
-    ("male_tie_shirt",  "top",    "Shirt & Tie",        "恤衫領呔", 0),
+    ("beanie",          "hat",    "Pom-Pom Beanie",     "毛球冷帽",       0),
+    ("beret",           "hat",    "Rose Beret",         "玫瑰貝雷帽",     0),
+    ("male_cap",        "hat",    "Baseball Cap",       "棒球帽",         0),
+    ("flower_crown",    "hat",    "Flower Crown",       "雛菊花環",       0),
+    ("star_clips",      "hat",    "Star Clips",         "星星髮夾",       0),
+    ("bucket_hat",      "hat",    "Bucket Hat",         "漁夫帽",         0),
+    ("straw_hat",       "hat",    "Straw Sun Hat",      "草帽",           0),
+    ("headphones",      "hat",    "Headphones",         "耳機",           0),
+    ("bow",             "hat",    "Ribbon Bow",         "緞帶蝴蝶結",     0),
+    ("cat_ears",        "hat",    "Cat Ears",           "貓耳髮箍",       0),
 ]
 
 # A dress is one garment covering both halves of the body, but there is no dress
