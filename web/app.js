@@ -55,6 +55,10 @@ const state = {
   entries: {},                                   // "YYYY-MM-DD" -> {mood, note, tags}
   tags: [],                                      // {id, label, icon, group, order, archived}
   outfit: { hat: null, top: null, bottom: null, face_acc: null },
+  // Which closet sections are collapsed. Holds the closed ones, not the open
+  // ones, so the empty default means everything shows — a new slot added later
+  // appears rather than hiding until someone finds it.
+  closetClosed: [],
   manifest: null,
   entryDate: null,                               // which day the entry screen edits
   draftMood: null,
@@ -95,6 +99,7 @@ function load() {
     if (raw.lang === "en" || raw.lang === "zh") state.lang = raw.lang;
     if (raw.theme === "light" || raw.theme === "dark") state.theme = raw.theme;
     if (raw.character) state.character = raw.character;
+    if (Array.isArray(raw.closetClosed)) state.closetClosed = raw.closetClosed;
 
     // Migration to schema 2. Entries written before tags existed simply have
     // none; give them an empty array so nothing downstream has to special-case
@@ -119,6 +124,7 @@ function save() {
     version: SCHEMA, lang: state.lang, theme: state.theme,
     character: state.character, entries: state.entries,
     tags: state.tags, outfit: state.outfit,
+    closetClosed: state.closetClosed,
   }));
 }
 
@@ -1340,17 +1346,39 @@ function renderCloset() {
 
   const slots = document.getElementById("slots");
   slots.innerHTML = "";
-  for (const [slot, title] of [["hat", "head"], ["face_acc", "faceAcc"], ["top", "tops"], ["bottom", "bottoms"]]) {
+  // Clothes first, accessories after: tops and bottoms are what gets changed
+  // most, and they were sitting below two accessory sections that are picked
+  // once and left alone.
+  for (const [slot, title] of [["top", "tops"], ["bottom", "bottoms"], ["face_acc", "faceAcc"], ["hat", "head"]]) {
     // Only what this character has art for. Anything else would render as
     // nothing at all, which reads as a broken item rather than an absent one.
     const items = state.manifest.items.filter(
       (i) => i.slot === slot && i.fits.includes(state.character));
     if (!items.length) continue;
-    const box = document.createElement("div");
+    // <details> rather than a hand-rolled toggle: it collapses without script,
+    // and carries the keyboard and screen-reader behaviour a div with a click
+    // handler would have to reimplement.
+    //
+    // State lives outside the element because renderCloset() rebuilds the whole
+    // list whenever anything is worn, which would otherwise spring every
+    // section back open the moment you picked something.
+    const box = document.createElement("details");
     box.className = "slot";
-    const h = document.createElement("h2");
+    box.open = !state.closetClosed.includes(slot);
+    const h = document.createElement("summary");
     h.textContent = t(title);
     box.appendChild(h);
+    // On the summary's click, not the element's toggle. `toggle` also fires for
+    // the programmatic open above, and it fires asynchronously, so events left
+    // over from a previous render land on state that has moved on. A click is
+    // only ever a person. The browser flips `open` after this handler, so the
+    // state being recorded is the opposite of what it currently reads.
+    h.onclick = () => {
+      const closed = state.closetClosed.filter((s) => s !== slot);
+      if (box.open) closed.push(slot);
+      state.closetClosed = closed;
+      save();
+    };
 
     const grid = document.createElement("div");
     grid.className = "grid";

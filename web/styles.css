@@ -308,7 +308,22 @@ textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
 
 /* ── closet ────────────────────────────────────────────────── */
 .slot { margin-bottom: 20px; }
-.slot h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+/* The heading is the collapse control, so it takes a thumb-sized row rather
+   than the bare text baseline it used to be. list-style:none plus the WebKit
+   pseudo-element are both needed: Safari ignores the standard property. */
+.slot > summary {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--muted); margin: 0 0 8px; padding: 6px 0;
+  cursor: pointer; list-style: none; -webkit-tap-highlight-color: transparent;
+}
+.slot > summary::-webkit-details-marker { display: none; }
+.slot > summary::before {
+  content: "›"; font-size: 15px; line-height: 1;
+  transform: rotate(90deg); transition: transform .15s ease;
+}
+.slot:not([open]) > summary::before { transform: rotate(0deg); }
+.slot > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
 .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
 .card {
   background: var(--card); border: 2px solid var(--line);
