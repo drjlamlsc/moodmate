@@ -423,6 +423,38 @@
       ]
     },
     {
+      "id": "squareglasses",
+      "slot": "face_acc",
+      "label": "Square Glasses",
+      "label_zh": "\u65b9\u6846\u773c\u93e1",
+      "unlockAt": 0,
+      "icon": "icon_squareglasses.png",
+      "layer": {
+        "girl": "item_squareglasses.png",
+        "boy": "item_squareglasses.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
+      "id": "heartglasses",
+      "slot": "face_acc",
+      "label": "Heart Glasses",
+      "label_zh": "\u5fc3\u5f62\u773c\u93e1",
+      "unlockAt": 0,
+      "icon": "icon_heartglasses.png",
+      "layer": {
+        "girl": "item_heartglasses.png",
+        "boy": "item_heartglasses.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
       "id": "male_cap",
       "slot": "hat",
       "label": "Baseball Cap",
@@ -536,5 +568,5 @@
       "color": "#3ea56a"
     }
   ],
-  "build": "c25b2dc732"
+  "build": "a3fec84e4b"
 }
