@@ -47,7 +47,7 @@ EYE_R = (596.0, 391.0)
 # slightly turned, so a frame centred on them looks a touch right of where it
 # belongs. Tuned by eye, kept separate from the measured anchors above so the
 # two never get confused.
-NUDGE = (-7.0, 2.0)
+NUDGE = (-9.0, 2.0)
 CANVAS = 1024
 PLATE_LEVEL, PLATE_CHROMA = 242, 12
 
