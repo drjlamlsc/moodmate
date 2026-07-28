@@ -41,6 +41,13 @@ from process_item import outside, components
 # difference the two eyes measure is noise, and honouring it tilts the frame.
 EYE_L = (428.0, 391.0)
 EYE_R = (596.0, 391.0)
+
+# Shifts the whole frame after the anchors are solved, for the part no
+# measurement settles: the eyes are geometrically centred but the face reads
+# slightly turned, so a frame centred on them looks a touch right of where it
+# belongs. Tuned by eye, kept separate from the measured anchors above so the
+# two never get confused.
+NUDGE = (-5.0, 0.0)
 CANVAS = 1024
 PLATE_LEVEL, PLATE_CHROMA = 242, 12
 
@@ -89,7 +96,9 @@ def main(path, name):
     print("lens centres in the drawing: (%.0f, %.0f) and (%.0f, %.0f)"
           % (centres[0][0], centres[0][1], centres[1][0], centres[1][1]))
 
-    a, b, tx, ty = similarity(centres, [EYE_L, EYE_R])
+    dst = [(EYE_L[0] + NUDGE[0], EYE_L[1] + NUDGE[1]),
+           (EYE_R[0] + NUDGE[0], EYE_R[1] + NUDGE[1])]
+    a, b, tx, ty = similarity(centres, dst)
     scale = (a * a + b * b) ** 0.5
     print("placing: scale %.3f, rotation %.1f deg" % (scale, np.degrees(np.arctan2(b, a))))
 
