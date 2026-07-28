@@ -132,7 +132,9 @@ h1 { font-size: 26px; margin: 0; letter-spacing: -0.02em; }
   aspect-ratio: 1;
 }
 .stage-sm .char { max-width: 180px; }
-.char img {
+/* canvas as well as img: a recoloured base is painted at run time and drawn
+   as a canvas, and it has to lie in the stack exactly as the files do. */
+.char img, .char canvas {
   position: absolute; inset: 0;
   width: 100%; height: 100%;
   image-rendering: auto;
@@ -215,7 +217,7 @@ h1 { font-size: 26px; margin: 0; letter-spacing: -0.02em; }
   overflow: hidden;
   border-radius: 50%;
 }
-.head img {
+.head img, .head canvas {
   position: absolute;
   width: 212%; height: 212%;
   left: -56%; top: -21%;
@@ -223,7 +225,7 @@ h1 { font-size: 26px; margin: 0; letter-spacing: -0.02em; }
 /* Face only. At calendar size the head crop above spends most of its area on
    hair and shoulders, which are identical every day — the expression is the
    only part that carries information, so zoom past everything else. */
-.head.tight img {
+.head.tight img, .head.tight canvas {
   width: 341%; height: 341%;
   left: -116%; top: -81%;
 }
@@ -638,3 +640,19 @@ textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .pull.snap { transition: transform .25s ease, opacity .25s ease; }
 .pull.busy { transform: translateY(0); opacity: 1; }
 #app.snap { transition: transform .25s ease; }
+
+/* Hair swatches. A colour needs no card around it — the swatch is the picture
+   of what you get — so these are plain circles rather than the item grid. */
+.swatches { display: flex; flex-wrap: wrap; gap: 10px; padding: 2px 0 4px; }
+.swatch {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--sw); border: 2px solid var(--line);
+  padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.swatch.on {
+  border-color: var(--accent);
+  /* A ring outside the border rather than a thicker one, so the colour circle
+     itself stays exactly the same size when selected and the row doesn't shift. */
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.swatch:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }

@@ -13,6 +13,7 @@ few hundred CSS pixels, so shipping 1024px costs load time for nothing.
 Layers are downscaled together, by the same factor, so they stay aligned.
 """
 import json, os, shutil, hashlib, re
+import numpy as np
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -104,6 +105,119 @@ def save(img, path, px):
     return im.size
 
 
+# Luminance cuts splitting the hair into shadow / main bulk / highlight, which
+# is how it is drawn. Measured from the masters: each character's histogram has
+# three tight spikes with empty gaps between them, so these sit in the gaps and
+# nothing lands on a boundary. Re-measure if the base art is ever redrawn.
+#   girl  shadow 145-165   bulk 205-220   highlight 240-255
+#   boy   shadow 120-145   bulk 175-190   highlight 220-240
+HAIR_BANDS = {"girl": [185, 232], "boy": [160, 205]}
+
+
+def face_hair_mask(path):
+    """Hair mask for a mood's face layer, which redraws the bangs over the eyes.
+
+    Those bangs are painted in the base's hair colour and sit *above* the
+    recoloured base, so without this they stay lavender and read as a stripe of
+    the old colour across the recoloured head — which is exactly what showed up
+    on the boy's temple.
+
+    Per pixel rather than by region, because hair_mask's approach cannot work
+    here: a face layer is a few sparse strokes on transparency, so nothing is
+    sealed and it found 2% of the hair. The same green-suppression test is
+    safe applied directly, since a face layer holds no garment that might be
+    violet in its own right; a close afterwards recovers the pixels along the
+    strand edges where the tone washes out.
+    """
+    a = np.array(Image.open(path).convert("RGBA")).astype(int)
+    rgb, alpha = a[..., :3], a[..., 3] > 10
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    from process_item import morph
+    m = alpha & ((b - g) >= 15) & ((r - g) >= 5)
+    m = morph(morph(m, "dilate", 3), "erode", 3) & alpha
+    return Image.fromarray(np.where(m, 255, 0).astype("uint8"), "L")
+
+
+def item_hair_mask(item_path, master_path, min_px=300):
+    """Hair mask for a garment layer that redraws hair, or None if it doesn't.
+
+    A wide-brimmed hat is drawn with the hair falling in front of it, so those
+    strands live in the hat's layer and sit above the recoloured base — the
+    straw hat put the original lavender back on a black-haired character.
+
+    The colour test alone cannot be used here, because several garments are
+    lavender in their own right and must not follow the hair: the beanie, the
+    pleated skirt, the cat ears. What separates them is that redrawn hair is
+    *the same pixels in the same places* as the base, while a lavender hat is
+    the hat's own shape and shading. Measured against the girl's base:
+
+        straw hat    57% of its violet pixels identical to the base   hair
+        bucket hat   48%                                             hair
+        beanie        3%                                             its own
+        cat ears      3%                                             its own
+        pleated skirt 0%                                             its own
+    """
+    from process_item import morph
+    a = np.array(Image.open(item_path).convert("RGBA")).astype(int)
+    m0 = np.array(Image.open(master_path).convert("RGBA")).astype(int)
+    if a.shape != m0.shape:
+        return None
+    rgb, alpha = a[..., :3], a[..., 3] > 10
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    violet = alpha & ((b - g) >= 15) & ((r - g) >= 5)
+    same = np.abs(rgb - m0[..., :3]).max(axis=2) <= 10
+    m = violet & same
+    if m.sum() < min_px:
+        return None
+    m = morph(morph(m, "dilate", 3), "erode", 3) & alpha & violet
+    return Image.fromarray(np.where(m, 255, 0).astype("uint8"), "L")
+
+
+def hair_mask(master_path, dark=110):
+    """White where the character's hair is, black elsewhere.
+
+    Regions sealed inside the figure's own line art are kept when their median
+    colour suppresses green, which is what makes a violet violet. Everything
+    the mask must reject sits on one side of that line or the other, measured
+    on both masters as blue-minus-green:
+
+        hair       36 (boy)  19 (girl)     kept
+        eyes        9                      rejected
+        camisole    6 (boy)  10-12 (girl)  rejected
+        skin       -7                      rejected
+
+    Simpler tests were tried and are wrong in ways that show. "More blue than
+    red" also passes the near-neutral camisole. Nearest-of-two-reference-colours
+    passes the eyes, which are a greyed mauve much closer to hair than to skin —
+    and painting the eyes is very obvious. There is deliberately no "above the
+    neck" rule: it did exclude the camisole, but it also cut the hair tips that
+    fall past the shoulders, which is what left a lavender patch on the boy's
+    nape after everything else was recoloured.
+
+    Regions rather than pixels, because a per-pixel test drops the highlights,
+    where red and blue meet, and the mask comes out moth-eaten.
+    """
+    from process_item import components, morph, outside
+    a = np.array(Image.open(master_path).convert("RGBA")).astype(int)
+    rgb, alpha = a[..., :3], a[..., 3] > 10
+    ink = alpha & (rgb.mean(axis=2) < dark)
+    sealed = morph(ink, "dilate", 2)
+    interior = (~sealed) & ~outside(sealed) & alpha
+    lab, comps = components(interior)
+    m = np.zeros(alpha.shape, bool)
+    for cid, n in comps:
+        if n < 60:                       # small enough to keep a stray tip
+            continue
+        reg = lab == cid
+        r, g, b = np.median(rgb[reg], axis=0)
+        if (b - g) >= 15 and (r - g) >= 5:
+            m |= reg
+    # Grow back over the line art that sealed the regions, then trim one pixel
+    # so the mask stops short of the outline rather than eating into it.
+    m = morph(morph(m, "dilate", 2), "erode", 1) & alpha
+    return Image.fromarray(np.where(m, 255, 0).astype("uint8"), "L")
+
+
 def stamp_service_worker():
     """Key the service worker's cache to the content it will cache.
 
@@ -174,8 +288,20 @@ def main():
             base = img
         save(img, os.path.join(OUT, out_name), CHAR_PX)
         total += os.path.getsize(os.path.join(OUT, out_name))
+
+        # One mask per character, not one image per hair colour: the app repaints
+        # the base on a canvas at runtime. Nearest-neighbour on the way down —
+        # a smooth resample would leave half-lit edge pixels that recolour into
+        # a fringe of the wrong shade against the line art.
+        mask_name = out_name.replace(".png", "_hair.png")
+        mk = hair_mask(src)
+        mk.resize((CHAR_PX, CHAR_PX), Image.NEAREST).save(
+            os.path.join(OUT, mask_name), optimize=True)
+        total += os.path.getsize(os.path.join(OUT, mask_name))
+
         manifest["characters"].append(
-            {"id": cid, "label": clabel, "label_zh": clabel_zh, "base": out_name})
+            {"id": cid, "label": clabel, "label_zh": clabel_zh, "base": out_name,
+             "hairMask": mask_name, "hairBands": HAIR_BANDS[cid]})
     live = {c["id"] for c in manifest["characters"]}
 
     for key, label, layer, colour, label_zh in MOODS:
@@ -193,13 +319,21 @@ def main():
                 save(Image.open(src).convert("RGBA"), os.path.join(OUT, "%s.png" % fname), CHAR_PX)
                 total += os.path.getsize(os.path.join(OUT, "%s.png" % fname))
                 entry["layer"][cid] = "%s.png" % fname
+
+                # The bangs this layer redraws have to follow the hair colour
+                # too, or they stay the original lavender on top of it.
+                fmask = "%s_hair.png" % fname
+                face_hair_mask(src).resize((CHAR_PX, CHAR_PX), Image.NEAREST).save(
+                    os.path.join(OUT, fmask), optimize=True)
+                total += os.path.getsize(os.path.join(OUT, fmask))
+                entry.setdefault("hairMask", {})[cid] = fmask
         manifest["moods"].append(entry)
 
     for row in ITEMS:
         name, slot, label, label_zh, unlock = row[:5]
         only = row[5] if len(row) > 5 else None
         icon = os.path.join(HERE, "items", "icon_%s.png" % name)
-        layers, fits = {}, []
+        layers, fits, hairmasks = {}, [], {}
         for cid, _, _, _, _, prefix in CHARACTERS:
             if cid not in live or (only and only != cid):
                 continue
@@ -213,6 +347,18 @@ def main():
                     total += os.path.getsize(os.path.join(OUT, "item_%s.png" % candidate))
                     layers[cid] = "item_%s.png" % candidate
                     fits.append(cid)
+
+                    # A hat drawn with hair falling over it carries those
+                    # strands in its own layer; they must follow the colour too.
+                    master_src = os.path.join(HERE, dict(
+                        (c[0], c[3]) for c in CHARACTERS)[cid])
+                    imask = item_hair_mask(src, master_src)
+                    if imask is not None:
+                        iname = "item_%s_hair.png" % candidate
+                        imask.resize((CHAR_PX, CHAR_PX), Image.NEAREST).save(
+                            os.path.join(OUT, iname), optimize=True)
+                        total += os.path.getsize(os.path.join(OUT, iname))
+                        hairmasks[cid] = iname
         # No art for this character, but bottoms are measured to fit both.
         for cid in live:
             if cid not in fits and not only and slot in FITS_BOTH and "girl" in layers:
@@ -229,7 +375,7 @@ def main():
         manifest["items"].append({
             "id": name, "slot": slot, "label": label, "label_zh": label_zh,
             "unlockAt": unlock, "icon": "icon_%s.png" % name,
-            "layer": layers, "fits": sorted(fits),
+            "layer": layers, "fits": sorted(fits), "hairMask": hairmasks,
         })
 
     # App icons: the character's head on a pastel plate. Home-screen icons are

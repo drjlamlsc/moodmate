@@ -12,13 +12,23 @@
       "id": "girl",
       "label": "Girl",
       "label_zh": "\u5973\u751f",
-      "base": "base.png"
+      "base": "base.png",
+      "hairMask": "base_hair.png",
+      "hairBands": [
+        185,
+        232
+      ]
     },
     {
       "id": "boy",
       "label": "Boy",
       "label_zh": "\u7537\u751f",
-      "base": "base_male.png"
+      "base": "base_male.png",
+      "hairMask": "base_male_hair.png",
+      "hairBands": [
+        160,
+        205
+      ]
     }
   ],
   "items": [
@@ -36,7 +46,10 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {
+        "girl": "item_beanie_hair.png"
+      }
     },
     {
       "id": "beret",
@@ -52,7 +65,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "cat_ears",
@@ -68,7 +82,10 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {
+        "girl": "item_cat_ears_hair.png"
+      }
     },
     {
       "id": "bow",
@@ -84,7 +101,10 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {
+        "girl": "item_bow_hair.png"
+      }
     },
     {
       "id": "flower_crown",
@@ -100,7 +120,10 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {
+        "girl": "item_flower_crown_hair.png"
+      }
     },
     {
       "id": "headphones",
@@ -116,7 +139,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "star_clips",
@@ -132,7 +156,10 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {
+        "girl": "item_star_clips_hair.png"
+      }
     },
     {
       "id": "bucket_hat",
@@ -148,7 +175,11 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {
+        "girl": "item_bucket_hat_hair.png",
+        "boy": "item_bucket_hat_male_hair.png"
+      }
     },
     {
       "id": "straw_hat",
@@ -164,7 +195,11 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {
+        "girl": "item_straw_hat_hair.png",
+        "boy": "item_straw_hat_male_hair.png"
+      }
     },
     {
       "id": "hoodie",
@@ -180,7 +215,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "cardigan",
@@ -196,7 +232,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "sweater",
@@ -212,7 +249,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "sailor",
@@ -228,7 +266,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "turtleneck",
@@ -244,7 +283,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "denim_jacket",
@@ -260,7 +300,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "skirt_pleated",
@@ -276,7 +317,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "skirt_plaid",
@@ -292,7 +334,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "skirt_corduroy",
@@ -308,7 +351,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "jeans",
@@ -324,7 +368,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "joggers",
@@ -340,7 +385,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "denim_shorts",
@@ -356,7 +402,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "cargo_pants",
@@ -372,7 +419,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "chino_shorts",
@@ -388,7 +436,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "pyjama_pants",
@@ -404,7 +453,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "gakuran_pants",
@@ -420,7 +470,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "roundglasses",
@@ -436,7 +487,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "squareglasses",
@@ -452,7 +504,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "heartglasses",
@@ -468,7 +521,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "sunglasses",
@@ -484,7 +538,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "male_cap",
@@ -500,7 +555,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "male_gakuran",
@@ -516,7 +572,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "male_bomber",
@@ -532,7 +589,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     },
     {
       "id": "male_tie_shirt",
@@ -548,7 +606,8 @@
       "fits": [
         "boy",
         "girl"
-      ]
+      ],
+      "hairMask": {}
     }
   ],
   "moods": [
@@ -560,7 +619,11 @@
         "girl": "face_awful.png",
         "boy": "face_male_awful.png"
       },
-      "color": "#e0574f"
+      "color": "#e0574f",
+      "hairMask": {
+        "girl": "face_awful_hair.png",
+        "boy": "face_male_awful_hair.png"
+      }
     },
     {
       "key": "bad",
@@ -570,7 +633,11 @@
         "girl": "face_bad.png",
         "boy": "face_male_bad.png"
       },
-      "color": "#ee8b3c"
+      "color": "#ee8b3c",
+      "hairMask": {
+        "girl": "face_bad_hair.png",
+        "boy": "face_male_bad_hair.png"
+      }
     },
     {
       "key": "meh",
@@ -587,7 +654,11 @@
         "girl": "face_good.png",
         "boy": "face_male_good.png"
       },
-      "color": "#8ab534"
+      "color": "#8ab534",
+      "hairMask": {
+        "girl": "face_good_hair.png",
+        "boy": "face_male_good_hair.png"
+      }
     },
     {
       "key": "rad",
@@ -597,8 +668,12 @@
         "girl": "face_happy.png",
         "boy": "face_male_happy.png"
       },
-      "color": "#3ea56a"
+      "color": "#3ea56a",
+      "hairMask": {
+        "girl": "face_happy_hair.png",
+        "boy": "face_male_happy_hair.png"
+      }
     }
   ],
-  "build": "4037622016"
+  "build": "0d60867d4a"
 }

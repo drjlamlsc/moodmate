@@ -54,7 +54,9 @@ const state = {
   character: "girl",                             // which body is worn
   entries: {},                                   // "YYYY-MM-DD" -> {mood, note, tags}
   tags: [],                                      // {id, label, icon, group, order, archived}
-  outfit: { hat: null, top: null, bottom: null, face_acc: null },
+  // `hair` lives here so a saved entry keeps the colour it was written with:
+  // entries snapshot the whole outfit object, so it needs no field of its own.
+  outfit: { hat: null, top: null, bottom: null, face_acc: null, hair: null },
   // Which closet sections are collapsed. Holds the closed ones, not the open
   // ones, so the empty default means everything shows — a new slot added later
   // appears rather than hiding until someone finds it.
@@ -93,8 +95,8 @@ function load() {
     // Only absent storage gets the default; someone who took the hoodie off
     // has made a choice, and reload shouldn't undo it.
     state.outfit = raw.outfit
-      ? Object.assign({ hat: null, top: null, bottom: null, face_acc: null }, raw.outfit)
-      : { hat: null, top: "hoodie", bottom: null, face_acc: null };
+      ? Object.assign({ hat: null, top: null, bottom: null, face_acc: null, hair: null }, raw.outfit)
+      : { hat: null, top: "hoodie", bottom: null, face_acc: null, hair: null };
     state.tags = Array.isArray(raw.tags) && raw.tags.length ? raw.tags : seedTags();
     if (raw.lang === "en" || raw.lang === "zh") state.lang = raw.lang;
     if (raw.theme === "light" || raw.theme === "dark") state.theme = raw.theme;
@@ -115,7 +117,7 @@ function load() {
     /* Corrupt or unreadable storage shouldn't brick the app; start fresh
        rather than throwing before the first render. */
     state.tags = seedTags();
-    state.outfit = { hat: null, top: "hoodie", bottom: null, face_acc: null };
+    state.outfit = { hat: null, top: "hoodie", bottom: null, face_acc: null, hair: null };
   }
 }
 
@@ -528,20 +530,162 @@ function streak() {
 const charById = (id) => state.manifest.characters.find((c) => c.id === id)
                       || state.manifest.characters[0];
 
+/* ── hair colour ─────────────────────────────────────────────────
+   Repainted on a canvas at run time rather than shipped as art. One image per
+   colour per character would be 20 more files for ten swatches, and another
+   set every time the base is redrawn; this ships one small mask each instead
+   and recolours base.png in the browser.
+
+   The hair is drawn in three flat tones — a main bulk, a lighter reflection,
+   and a shadow — so each pixel inside the mask is sorted into one by luminance
+   and painted the matching shade of the chosen colour. Repainting flat rather
+   than tinting is what allows dark hair: a blend that preserves the original's
+   lightness can only ever produce a light grey from lavender. */
+
+const HAIR_COLOURS = [
+  { id: "lavender", hex: "#d6c9dd" }, { id: "black",  hex: "#2e2b33" },
+  { id: "brown",    hex: "#8b5e42" }, { id: "blonde", hex: "#d4a25f" },
+  { id: "ginger",   hex: "#c96a3d" }, { id: "red",    hex: "#b8434a" },
+  { id: "pink",     hex: "#e8a0b8" }, { id: "blue",   hex: "#7fb3d5" },
+  { id: "mint",     hex: "#8fd0be" }, { id: "silver", hex: "#c2c6cc" },
+];
+
+// "char|hex" -> a painted canvas, kept as a canvas rather than encoded to a
+// PNG URL. Encoding was the whole cost: measured at 1020ms of a 1043ms repaint,
+// against 24ms for the pixel walk itself. Blitting the cached canvas into each
+// character instead is a copy the GPU does, and needs no encode at all.
+const hairCanvases = new Map();
+const hairPending = new Set();
+
+const hexToRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+
+/* Shadow and highlight are derived from the one colour the user picks, so a
+   swatch is a single choice rather than three. Shifted in lightness with a
+   little more saturation in shadow and a little less in the reflection, which
+   is how the original art is painted. */
+function hairShades(hex) {
+  const [r, g, b] = hexToRgb(hex).map((v) => v / 255);
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+  let h = 0, s = 0;
+  if (mx !== mn) {
+    const d = mx - mn;
+    s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+    h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h /= 6;
+  }
+  const clamp = (v) => Math.max(0, Math.min(1, v));
+  const toRgb = (L, S) => {
+    if (!S) { const v = Math.round(L * 255); return [v, v, v]; }
+    const q = L < 0.5 ? L * (1 + S) : L + S - L * S, p = 2 * L - q;
+    const c = (tc) => {
+      if (tc < 0) tc += 1; if (tc > 1) tc -= 1;
+      if (tc < 1 / 6) return p + (q - p) * 6 * tc;
+      if (tc < 1 / 2) return q;
+      if (tc < 2 / 3) return p + (q - p) * (2 / 3 - tc) * 6;
+      return p;
+    };
+    return [c(h + 1 / 3), c(h), c(h - 1 / 3)].map((v) => Math.round(v * 255));
+  };
+  return [toRgb(clamp(l - 0.13), clamp(s + 0.10)),   // shadow
+          toRgb(l, s),                               // main bulk
+          toRgb(clamp(l + 0.16), clamp(s - 0.06))];  // reflection
+}
+
+const loadImage = (src) => new Promise((res, rej) => {
+  const im = new Image();
+  im.onload = () => res(im);
+  im.onerror = rej;
+  im.src = src;
+});
+
+async function paintHair(src, maskSrc, bands, hex) {
+  const [base, mask] = await Promise.all([
+    loadImage(asset(src)), loadImage(asset(maskSrc)),
+  ]);
+  const cv = document.createElement("canvas");
+  cv.width = base.width; cv.height = base.height;
+  const cx = cv.getContext("2d", { willReadFrequently: true });
+  cx.drawImage(base, 0, 0);
+  const img = cx.getImageData(0, 0, cv.width, cv.height);
+
+  const mc = document.createElement("canvas");
+  mc.width = base.width; mc.height = base.height;
+  const mcx = mc.getContext("2d", { willReadFrequently: true });
+  mcx.drawImage(mask, 0, 0, cv.width, cv.height);
+  const mk = mcx.getImageData(0, 0, cv.width, cv.height).data;
+
+  const [lo, hi] = bands || [185, 232];
+  const shades = hairShades(hex);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    if (mk[i] < 128 || d[i + 3] < 10) continue;
+    const lum = (d[i] + d[i + 1] + d[i + 2]) / 3;
+    const s = shades[lum < lo ? 0 : lum < hi ? 1 : 2];
+    d[i] = s[0]; d[i + 1] = s[1]; d[i + 2] = s[2];
+  }
+  cx.putImageData(img, 0, 0);
+  return cv;
+}
+
+/* Synchronous, because renderChar is. An unpainted colour draws the original
+   art for this frame and paints in the background; the re-render when it lands
+   is what the user sees, a moment later. */
+function hairCanvas(l, hex) {
+  if (!hex || hex === HAIR_COLOURS[0].hex || !l.mask) return null;
+  const key = l.src + "|" + hex;
+  if (hairCanvases.has(key)) return hairCanvases.get(key);
+  if (!hairPending.has(key)) {
+    hairPending.add(key);
+    paintHair(l.src, l.mask, l.bands, hex).then((cv) => {
+      hairCanvases.set(key, cv);
+      hairPending.delete(key);
+      repaintChars();
+    }).catch(() => hairPending.delete(key));
+  }
+  return null;
+}
+
+// Only the character art depends on hair, so re-run those renders rather than
+// the whole screen: a full render would drop focus out of the note field.
+function repaintChars() {
+  if (!state.manifest) return;
+  const scr = document.querySelector(".screen:not([hidden])");
+  if (!scr) return;
+  if (scr.id === "screen-today") renderToday();
+  else if (scr.id === "screen-closet") renderCloset();
+  else if (scr.id === "screen-list") renderList();
+  else if (scr.id === "screen-history") renderHistory();
+}
+
+
 // Every layer is per character: the two bodies share a canvas and a hip line,
 // but not a hairline, so an item only draws when art exists for that character.
 function layersFor(mood, outfit, character) {
   const m = state.manifest;
   const ch = character || state.character;
-  const out = [{ src: charById(ch).base, z: 0 }];
+  // Hair rides inside the outfit rather than beside it, so every place that
+  // already snapshots an outfit — each saved entry — keeps the colour it was
+  // written with, with no new field to migrate.
+  const hair = outfit.hair || null;
+  const cc = charById(ch);
+  const out = [{ src: cc.base, z: 0, hair, mask: cc.hairMask, bands: cc.hairBands }];
   const push = (id, slot) => {
     const it = m.items.find((i) => i.id === id);
-    if (it && it.layer[ch]) out.push({ src: it.layer[ch], z: m.slots[slot] });
+    // A hat drawn with hair falling over it carries those strands, so it takes
+    // a mask too; a garment that is merely lavender does not get one.
+    if (it && it.layer[ch]) {
+      out.push({ src: it.layer[ch], z: m.slots[slot], hair,
+                 mask: it.hairMask && it.hairMask[ch], bands: cc.hairBands });
+    }
   };
   if (outfit.bottom) push(outfit.bottom, "bottom");
   if (outfit.top) push(outfit.top, "top");
   const mo = m.moods.find((x) => x.key === mood);
-  if (mo && mo.layer && mo.layer[ch]) out.push({ src: mo.layer[ch], z: m.slots.face });
+  // The mood's own layer redraws the bangs, so it carries a mask of its own.
+  if (mo && mo.layer && mo.layer[ch]) {
+    out.push({ src: mo.layer[ch], z: m.slots.face, hair,
+               mask: mo.hairMask && mo.hairMask[ch], bands: cc.hairBands });
+  }
   // Above the expression, below hats: a frame covers the eyes, a brim covers it.
   if (outfit.face_acc) push(outfit.face_acc, "face_acc");
   if (outfit.hat) push(outfit.hat, "hat");
@@ -563,12 +707,7 @@ function renderChar(el, mood, outfit, character, rig) {
 
   const layers = layersFor(mood, outfit, character);
   const stack = (parent) => {
-    for (const l of layers) {
-      const img = new Image();
-      img.src = asset(l.src);
-      img.alt = "";
-      parent.appendChild(img);
-    }
+    for (const l of layers) parent.appendChild(layerNode(l));
   };
 
   if (!rig) { stack(el); return; }
@@ -589,14 +728,30 @@ function renderChar(el, mood, outfit, character, rig) {
 // `tight` crops to the face alone. At calendar size a full head crop spends
 // most of its pixels on hair and shoulders, leaving the expression — the only
 // thing that distinguishes one day from another — a few pixels across.
+// A recoloured base is a canvas, not a file, so it is blitted rather than
+// pointed at. Everything else is an <img> exactly as before.
+function layerNode(l) {
+  if (l.hair && l.mask) {
+    const cv = hairCanvas(l, l.hair);
+    if (cv) {
+      const el = document.createElement("canvas");
+      el.width = cv.width; el.height = cv.height;
+      el.getContext("2d").drawImage(cv, 0, 0);
+      return el;
+    }
+  }
+  const img = new Image();
+  img.src = asset(l.src);
+  img.alt = "";
+  return img;
+}
+
 function headChip(mood, tight, character) {
   const wrap = document.createElement("div");
   wrap.className = "head" + (tight ? " tight" : "");
-  for (const l of layersFor(mood, { hat: null, top: null, bottom: null }, character)) {
-    const img = new Image();
-    img.src = asset(l.src);
-    img.alt = "";
-    wrap.appendChild(img);
+  for (const l of layersFor(mood, { hat: null, top: null, bottom: null,
+                                    hair: state.outfit.hair }, character)) {
+    wrap.appendChild(layerNode(l));
   }
   return wrap;
 }
@@ -1350,6 +1505,44 @@ function renderDetail() {
 
 /* ── closet ──────────────────────────────────────────────────── */
 
+// Swatches rather than item cards: an item card shows a picture of the thing
+// you get, and for a colour the swatch is that picture.
+function hairSection(parent) {
+  const box = document.createElement("details");
+  box.className = "slot";
+  box.open = !state.closetClosed.includes("hair");
+  const h = document.createElement("summary");
+  h.textContent = t("hair");
+  box.appendChild(h);
+  h.onclick = () => {
+    const closed = state.closetClosed.filter((s) => s !== "hair");
+    if (box.open) closed.push("hair");
+    state.closetClosed = closed;
+    save();
+  };
+
+  const row = document.createElement("div");
+  row.className = "swatches";
+  const worn = state.outfit.hair || HAIR_COLOURS[0].hex;
+  for (const c of HAIR_COLOURS) {
+    const b = document.createElement("button");
+    b.className = "swatch" + (c.hex === worn ? " on" : "");
+    b.type = "button";
+    b.style.setProperty("--sw", c.hex);
+    b.setAttribute("aria-pressed", String(c.hex === worn));
+    b.setAttribute("aria-label", t("hair") + " " + c.id);
+    b.onclick = () => {
+      state.outfit.hair = c.hex === HAIR_COLOURS[0].hex ? null : c.hex;
+      save();
+      renderCloset();
+      renderToday();
+    };
+    row.appendChild(b);
+  }
+  box.appendChild(row);
+  parent.appendChild(box);
+}
+
 function renderCloset() {
   const total = Object.keys(state.entries).length;
   document.getElementById("closet-progress").textContent =
@@ -1377,6 +1570,7 @@ function renderCloset() {
 
   const slots = document.getElementById("slots");
   slots.innerHTML = "";
+  hairSection(slots);
   // Clothes first, accessories after: tops and bottoms are what gets changed
   // most, and they were sitting below two accessory sections that are picked
   // once and left alone.
