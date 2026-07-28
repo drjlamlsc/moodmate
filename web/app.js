@@ -770,12 +770,15 @@ function layerNode(l) {
   return img;
 }
 
-function headChip(mood, tight, character) {
+// `hair` is passed in rather than read from the live outfit: a chip standing
+// for a saved day has to show that day's colour, and reading state here made
+// every past day in the calendar repaint itself whenever the closet changed.
+function headChip(mood, tight, character, hair) {
   const wrap = document.createElement("div");
   wrap.className = "head" + (tight ? " tight" : "");
   // Nothing worn but the hair colour: the chip is cropped to the head, so a
   // garment would cost a layer to draw and never appear.
-  for (const l of layersFor(mood, Object.assign(emptyOutfit(), { hair: state.outfit.hair }),
+  for (const l of layersFor(mood, Object.assign(emptyOutfit(), { hair: hair || null }),
                             character)) {
     wrap.appendChild(layerNode(l));
   }
@@ -807,7 +810,9 @@ function renderToday() {
     b.style.setProperty("--mood", m.color);
     b.setAttribute("role", "radio");
     b.setAttribute("aria-checked", String(m.key === state.draftMood));
-    b.appendChild(headChip(m.key));
+    // The live colour is right here: this picker previews an entry about to be
+    // saved, and saving snapshots the outfit as it currently stands.
+    b.appendChild(headChip(m.key, false, null, state.outfit.hair));
     const label = document.createElement("span");
     label.className = "label";
     label.textContent = nameOf(m);
@@ -1216,7 +1221,8 @@ function renderHistory() {
       if (state.tagFilter && !(entry.tags || []).includes(state.tagFilter)) {
         cell.classList.add("dim");
       }
-      cell.appendChild(headChip(entry.mood, true, entry.character));
+      cell.appendChild(headChip(entry.mood, true, entry.character,
+                                (entry.outfit || state.outfit).hair));
       cell.onclick = () => { state.selectedDay = k; state.editing = null; renderHistory(); };
     } else if (k <= todayKey()) {
       // Empty past day: jump to the entry screen already set to that date, so
@@ -1552,7 +1558,9 @@ function renderDetail() {
     b.className = "mood";
     b.style.setProperty("--mood", m.color);
     b.setAttribute("aria-checked", String(m.key === state.editMood));
-    b.appendChild(headChip(m.key));
+    // Editing a past day: its own colour, not whatever the closet holds now.
+    b.appendChild(headChip(m.key, false, entry.character,
+                           (entry.outfit || state.outfit).hair));
     const label = document.createElement("span");
     label.className = "label";
     label.textContent = nameOf(m);
