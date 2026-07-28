@@ -477,6 +477,19 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
             for cid, n in lcomps[1:]:
                 if n < biggest * 0.15:
                     mask &= ~(llab == cid)
+    # A hem is where a garment stops, but a render does not stop drawing there:
+    # below it the legs and feet get redrawn, close to the master but not equal
+    # to it, and those pixels come into the layer. They cost nothing while the
+    # feet are bare — they repaint the same feet — but a garment layer sits at
+    # z=20 and a shoe at z=5, so redrawn feet cover the shoe underneath. Cutting
+    # the layer a few pixels below the hem hands the feet back to the base,
+    # where footwear can reach them.
+    if name in HEM_TRIM:
+        cut = HEM_TRIM[name]
+        dropped = int(mask[cut:].sum())
+        mask[cut:] = False
+        print("hem trim: dropped %d px below y=%d" % (dropped, cut))
+
     out = T.copy()
     out[..., 3] = np.where(mask, T[..., 3], 0)
     layer = Image.fromarray(out.astype("uint8"))
@@ -538,6 +551,12 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
 # ink) survives into the layer. Auditing all 21 that way found these three and
 # nothing else — the rest of the low scores are shading that falls on the
 # character, such as hair under a brim, and is excluded correctly.
+# Long garments, and the row a few pixels below where each one's own fabric
+# stops: yukata 897, its male render 890, the sundress's skirt 838. Measured
+# from the fabric's own colour rather than guessed, and set low enough to keep
+# the hem's outline, which is drawn below the last fabric pixel.
+HEM_TRIM = {"yukata": 903, "yukata_male": 896, "sundress": 842}
+
 ACCESSORIES = {"roundglasses"}
 
 DARK_OVERRIDES = {"male_gakuran": 55, "sailor": 55, "male_tie_shirt": 55,
