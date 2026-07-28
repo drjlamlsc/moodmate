@@ -455,6 +455,22 @@
       ]
     },
     {
+      "id": "sunglasses",
+      "slot": "face_acc",
+      "label": "Sunglasses",
+      "label_zh": "\u592a\u967d\u773c\u93e1",
+      "unlockAt": 0,
+      "icon": "icon_sunglasses.png",
+      "layer": {
+        "girl": "item_sunglasses.png",
+        "boy": "item_sunglasses.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ]
+    },
+    {
       "id": "male_cap",
       "slot": "hat",
       "label": "Baseball Cap",
@@ -568,5 +584,5 @@
       "color": "#3ea56a"
     }
   ],
-  "build": "34e04b73d0"
+  "build": "569093a555"
 }

@@ -77,6 +77,7 @@ ITEMS = [
     ("roundglasses",    "face_acc", "Round Glasses",    "圓框眼鏡",       0),
     ("squareglasses",   "face_acc", "Square Glasses",   "方框眼鏡",       0),
     ("heartglasses",    "face_acc", "Heart Glasses",    "心形眼鏡",       0),
+    ("sunglasses",      "face_acc", "Sunglasses",       "太陽眼鏡",       0),
     ("male_cap",        "hat",    "Baseball Cap",       "棒球帽", 0),
     ("male_gakuran",    "top",    "Gakuran Jacket",     "學生外套", 0),
     ("male_bomber",     "top",    "Bomber Jacket",      "飛行外套", 0),

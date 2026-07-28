@@ -53,7 +53,21 @@ EYE_R = (596.0, 391.0)
 NUDGE = (-9.0, 2.0)
 CANVAS = 1024
 PLATE_LEVEL, PLATE_CHROMA = 242, 12
-INK_LEVEL = 110        # the drawing's own keyline, used as the wall
+
+# Luminance levels to try as the wall, darkest-last. The wall has to sit below
+# the keyline but above whatever the rim encloses, and where that is depends on
+# the drawing: a clear lens leaves 255 inside, so 110 separates them easily, but
+# sunglasses fill the lens at around 40 against a keyline near 4 and 110 swallows
+# both, leaving no enclosed region at all.
+#
+# Searching is safe only because the shape test below is strict enough to
+# reject a wrong level rather than quietly accept it. That took a correction:
+# with the level alone deciding, the tortoiseshell pair registered 5.5 degrees
+# askew off two fragments of the speckled rim, which at a wall of 60 splits into
+# plenty of blobs alike in area and level with each other. What no rim fragment
+# has is symmetry about the drawing's own centre of mass, and that is what now
+# rejects the level rather than the level being trusted.
+INK_LEVELS = (110, 60, 30, 18, 10)
 
 
 def cut_plate(path):
@@ -75,31 +89,56 @@ def cut_plate(path):
     plate = (a.min(axis=2) >= PLATE_LEVEL) & (chroma <= PLATE_CHROMA)
     bg = plate & outside(~plate)
 
-    ink = (~bg) & (lum < INK_LEVEL)
-    interior = ~morph(ink, "dilate", 2)
-    interior &= ~outside(morph(ink, "dilate", 2))
-    lab, comps = components(interior)
+    # Centre of mass of the drawing's own ink, which a pair of spectacles is
+    # symmetric about. Used to reject pairs that sit off to one side.
+    iys, ixs = np.nonzero(~bg)
+    cx = ixs.mean()
 
-    cands = []
-    for cid, n in comps[:10]:
-        if n < 200:
+    def lenses_at(level):
+        ink = (~bg) & (lum < level)
+        sealed = morph(ink, "dilate", 2)
+        interior = (~sealed) & ~outside(sealed)
+        lab, comps = components(interior)
+
+        cands = []
+        for cid, n in comps[:10]:
+            if n < 200:
+                break
+            ys, xs = np.nonzero(lab == cid)
+            w = xs.max() - xs.min() + 1
+            h = ys.max() - ys.min() + 1
+            # A lens fills its own bounding box: a circle is 0.79 of one, a
+            # square lens nearly all of it. A sliver of rim caught between two
+            # speckles is a crescent, and fills very little of its box. This is
+            # what tells a real lens from a fragment that merely happens to be
+            # the right size and in the right place.
+            if n / float(w * h) < 0.6 or not 0.5 <= w / float(h) <= 2.0:
+                continue
+            cands.append({"cid": cid, "n": n, "x": xs.mean(), "y": ys.mean(),
+                          "lum": float(np.median(lum[lab == cid]))})
+
+        best, found = None, None
+        for i in range(len(cands)):
+            for j in range(i + 1, len(cands)):
+                p, q = cands[i], cands[j]
+                if abs(p["y"] - q["y"]) > 25 or abs(p["x"] - q["x"]) < 100:
+                    continue
+                if abs((p["x"] + q["x"]) / 2 - cx) > 40:
+                    continue
+                ratio = min(p["n"], q["n"]) / max(p["n"], q["n"])
+                if ratio < 0.7:
+                    continue
+                score = (p["n"] + q["n"]) * ratio
+                if best is None or score > best:
+                    best, found = score, (p, q)
+        return lab, found
+
+    lab = pair = None
+    for level in INK_LEVELS:
+        lab, pair = lenses_at(level)
+        if pair is not None:
+            print("keyline wall at luminance %d" % level)
             break
-        ys, xs = np.nonzero(lab == cid)
-        cands.append({"cid": cid, "n": n, "x": xs.mean(), "y": ys.mean(),
-                      "lum": float(np.median(lum[lab == cid]))})
-
-    best, pair = None, None
-    for i in range(len(cands)):
-        for j in range(i + 1, len(cands)):
-            p, q = cands[i], cands[j]
-            if abs(p["y"] - q["y"]) > 25 or abs(p["x"] - q["x"]) < 100:
-                continue
-            ratio = min(p["n"], q["n"]) / max(p["n"], q["n"])
-            if ratio < 0.7:
-                continue
-            score = (p["n"] + q["n"]) * ratio
-            if best is None or score > best:
-                best, pair = score, (p, q)
 
     if pair is None:
         sys.exit("FAIL: could not find two lens regions to register by. The rim "
