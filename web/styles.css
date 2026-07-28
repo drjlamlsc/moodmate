@@ -162,19 +162,19 @@ h1 { font-size: 26px; margin: 0; letter-spacing: -0.02em; }
   50%      { transform: scale(var(--sq-x), var(--sq-y)); }
 }
 .stage .char, .entry-char {
-  --sq-x: 1.03;
-  --sq-y: 0.97;
-  --sq-time: 3s;
+  --sq-x: 1.015;
+  --sq-y: 0.985;
+  --sq-time: 1.8s;
   transform-origin: 50% 100%;
   animation: squash var(--sq-time) ease-in-out infinite;
   will-change: transform;
 }
 /* "rad" is the top mood's key; the art file is face_happy.png, which does not
    match, so keying off the filename here would silently do nothing. */
-.stage .char[data-mood="rad"],   .entry-char[data-mood="rad"]   { --sq-x: 1.05;  --sq-y: 0.95;  --sq-time: 1.7s; }
-.stage .char[data-mood="good"],  .entry-char[data-mood="good"]  { --sq-x: 1.04;  --sq-y: 0.96;  --sq-time: 2.2s; }
-.stage .char[data-mood="bad"],   .entry-char[data-mood="bad"]   { --sq-x: 1.018; --sq-y: 0.982; --sq-time: 4.2s; }
-.stage .char[data-mood="awful"], .entry-char[data-mood="awful"] { --sq-x: 1.012; --sq-y: 0.988; --sq-time: 5.5s; }
+.stage .char[data-mood="rad"],   .entry-char[data-mood="rad"]   { --sq-x: 1.025; --sq-y: 0.975; --sq-time: 1s;    }
+.stage .char[data-mood="good"],  .entry-char[data-mood="good"]  { --sq-x: 1.02;  --sq-y: 0.98;  --sq-time: 1.35s; }
+.stage .char[data-mood="bad"],   .entry-char[data-mood="bad"]   { --sq-x: 1.009; --sq-y: 0.991; --sq-time: 2.5s;  }
+.stage .char[data-mood="awful"], .entry-char[data-mood="awful"] { --sq-x: 1.006; --sq-y: 0.994; --sq-time: 3.2s;  }
 
 /* A character that never stops moving is exactly what this setting is for. */
 @media (prefers-reduced-motion: reduce) {
