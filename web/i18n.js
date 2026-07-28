@@ -65,6 +65,7 @@ const STRINGS = {
   tops:             { en: "Tops",             zh: "上身" },
   bottoms:          { en: "Bottoms",          zh: "下身" },
   none:             { en: "None",             zh: "無" },
+  coveredByDress:   { en: "covered by dress",  zh: "被洋裝遮蓋" },
   entriesLogged:    { en: "entries logged",   zh: "條記錄" },
   moreToUnlock:     { en: "more to unlock",   zh: "條後解鎖" },
 

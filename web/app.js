@@ -663,6 +663,14 @@ function repaintChars() {
 
 // Every layer is per character: the two bodies share a canvas and a hip line,
 // but not a hairline, so an item only draws when art exists for that character.
+// True when the item worn on top is a one-piece — a dress, which has to sit in
+// the top slot to composite over bottoms, and so has to suppress them itself.
+function coversBottom(topId) {
+  if (!topId) return false;
+  const it = state.manifest.items.find((i) => i.id === topId);
+  return !!(it && it.coversBottom);
+}
+
 function layersFor(mood, outfit, character) {
   const m = state.manifest;
   const ch = character || state.character;
@@ -681,7 +689,10 @@ function layersFor(mood, outfit, character) {
                  mask: it.hairMask && it.hairMask[ch], bands: cc.hairBands });
     }
   };
-  if (outfit.bottom) push(outfit.bottom, "bottom");
+  // A dress covers both halves, so whatever is in the bottom slot stays
+  // unworn rather than running out below the hem. The choice is kept, not
+  // cleared: take the dress off and the skirt or jeans is back where it was.
+  if (outfit.bottom && !coversBottom(outfit.top)) push(outfit.bottom, "bottom");
   if (outfit.top) push(outfit.top, "top");
   const mo = m.moods.find((x) => x.key === mood);
   // The mood's own layer redraws the bangs, so it carries a mask of its own.
@@ -1595,6 +1606,16 @@ function renderCloset() {
     box.open = !state.closetClosed.includes(slot);
     const h = document.createElement("summary");
     h.textContent = t(title);
+    // A dress is wearing the bottom slot for you. The section stays open and
+    // clickable — what is picked in there is still remembered, and shows again
+    // the moment the dress comes off — but it is dimmed and says why.
+    if (slot === "bottom" && coversBottom(state.outfit.top)) {
+      box.classList.add("slot-covered");
+      const why = document.createElement("span");
+      why.className = "covered-note";
+      why.textContent = t("coveredByDress");
+      h.appendChild(why);
+    }
     box.appendChild(h);
     // On the summary's click, not the element's toggle. `toggle` also fires for
     // the programmatic open above, and it fires asynchronously, so events left

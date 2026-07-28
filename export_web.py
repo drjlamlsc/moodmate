@@ -88,6 +88,12 @@ ITEMS = [
     ("male_tie_shirt",  "top",    "Shirt & Tie",        "恤衫領呔", 0),
 ]
 
+# A dress is one garment covering both halves of the body, but there is no dress
+# slot: it lives in `top` so it composites over anything in `bottom`. Listed
+# here, it also suppresses the bottom entirely — otherwise trouser legs run out
+# below the hem. The closet greys that section out while one is worn.
+COVERS_BOTTOM = {"sundress"}
+
 MOODS = [
     # key      label     face layer (None = master's own face)  colour   zh
     ("awful",  "Awful",  "face_awful",  "#e0574f", "好差"),   # red
@@ -446,6 +452,7 @@ def main():
             "id": name, "slot": slot, "label": label, "label_zh": label_zh,
             "unlockAt": unlock, "icon": "icon_%s.png" % name,
             "layer": layers, "fits": sorted(fits), "hairMask": hairmasks,
+            **({"coversBottom": True} if name in COVERS_BOTTOM else {}),
         })
 
     # App icons: the character's head on a pastel plate. Home-screen icons are

@@ -397,6 +397,13 @@ textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
 }
 .slot:not([open]) > summary::before { transform: rotate(0deg); }
 .slot > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+/* Worn under a dress, the bottoms are still pickable — the choice is kept for
+   when the dress comes off — so the grid is dimmed rather than disabled. */
+.slot-covered > .grid { opacity: .45; }
+.covered-note {
+  text-transform: none; letter-spacing: normal; font-size: 11px;
+  color: var(--muted); opacity: .8;
+}
 .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
 .card {
   background: var(--card); border: 2px solid var(--line);

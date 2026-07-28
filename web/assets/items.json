@@ -323,7 +323,8 @@
       "fits": [
         "girl"
       ],
-      "hairMask": {}
+      "hairMask": {},
+      "coversBottom": true
     },
     {
       "id": "skirt_pleated",
@@ -700,5 +701,5 @@
       }
     }
   ],
-  "build": "5413e7936c"
+  "build": "644a4ba0df"
 }
