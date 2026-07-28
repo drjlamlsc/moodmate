@@ -540,7 +540,13 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
 # character, such as hair under a brim, and is excluded correctly.
 ACCESSORIES = {"roundglasses"}
 
-DARK_OVERRIDES = {"male_gakuran": 55, "sailor": 55, "male_tie_shirt": 55}
+DARK_OVERRIDES = {"male_gakuran": 55, "sailor": 55, "male_tie_shirt": 55,
+                  # Her navy fill sits at luminance 50, and the automatic step
+                  # stops at 65 because the dark share falls below its limit
+                  # there — so the fill was still counted as line art and the
+                  # trousers came out full of holes. His render is lighter and
+                  # the automatic step handles it, hence only hers is listed.
+                  "gakuran_pants": 50}
 
 
 if __name__ == "__main__":
