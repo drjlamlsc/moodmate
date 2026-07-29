@@ -99,6 +99,7 @@ ITEMS = [
     ("heartglasses",    "face_acc", "Heart Glasses",    "心形眼鏡",       0),
     ("sunglasses",      "face_acc", "Sunglasses",       "太陽眼鏡",       0),
     ("ponytail",        "hairstyle", "Ponytail",      "馬尾",           0, "girl"),
+    ("curls",           "hairstyle", "Curls",         "捲髮",           0, "girl"),
     ("beanie",          "hat",    "Pom-Pom Beanie",     "毛球冷帽",       0),
     ("beret",           "hat",    "Rose Beret",         "玫瑰貝雷帽",     0),
     ("male_cap",        "hat",    "Baseball Cap",       "棒球帽",         0),
@@ -125,7 +126,7 @@ REQUIRES = {"geta": "yukata"}
 
 # Items that are made of hair, and so follow the hair colour wholesale rather
 # than by matching the master. See item_hair_mask.
-HAIR_ITEMS = {"ponytail"}
+HAIR_ITEMS = {"ponytail", "curls"}
 
 MOODS = [
     # key      label     face layer (None = master's own face)  colour   zh

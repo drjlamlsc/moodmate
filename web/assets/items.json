@@ -597,6 +597,23 @@
       }
     },
     {
+      "id": "curls",
+      "slot": "hairstyle",
+      "label": "Curls",
+      "label_zh": "\u6372\u9aee",
+      "unlockAt": 0,
+      "icon": "icon_curls.png",
+      "layer": {
+        "girl": "item_curls.png"
+      },
+      "fits": [
+        "girl"
+      ],
+      "hairMask": {
+        "girl": "item_curls_hair.png"
+      }
+    },
+    {
       "id": "beanie",
       "slot": "hat",
       "label": "Pom-Pom Beanie",
@@ -841,5 +858,5 @@
       }
     }
   ],
-  "build": "0eba7730c6"
+  "build": "b3ee7619ac"
 }
