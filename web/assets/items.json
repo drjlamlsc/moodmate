@@ -1,6 +1,7 @@
 {
   "canvas": 512,
   "slots": {
+    "hair_back": -10,
     "shoes": 5,
     "bottom": 10,
     "top": 20,
@@ -614,6 +615,23 @@
       }
     },
     {
+      "id": "longhair",
+      "slot": "hair_back",
+      "label": "Long Hair",
+      "label_zh": "\u9577\u9aee",
+      "unlockAt": 0,
+      "icon": "icon_longhair.png",
+      "layer": {
+        "girl": "item_longhair.png"
+      },
+      "fits": [
+        "girl"
+      ],
+      "hairMask": {
+        "girl": "item_longhair_hair.png"
+      }
+    },
+    {
       "id": "beanie",
       "slot": "hat",
       "label": "Pom-Pom Beanie",
@@ -858,5 +876,5 @@
       }
     }
   ],
-  "build": "b3ee7619ac"
+  "build": "db76c81132"
 }

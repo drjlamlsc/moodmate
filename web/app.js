@@ -51,8 +51,8 @@ const DEFAULT_TAGS = [
 // corrupt storage, and a slot added to only two of those three is a slot that
 // silently never loads.
 function emptyOutfit() {
-  return { hat: null, hairstyle: null, top: null, bottom: null, shoes: null,
-           face_acc: null, hair: null };
+  return { hat: null, hairstyle: null, hair_back: null, top: null, bottom: null,
+           shoes: null, face_acc: null, hair: null };
 }
 
 const state = {
@@ -724,6 +724,10 @@ function layersFor(mood, outfit, character) {
   // cleared: take the dress off and the skirt or jeans is back where it was.
   // Guarded here as well as in the closet: an entry saved before an item grew
   // a requirement still holds whatever it held.
+  // The one layer that goes under the base — hair down the back, with the body
+  // and everything worn on it in front. See SLOTS; the sort at the end is what
+  // actually puts it there.
+  if (outfit.hair_back) push(outfit.hair_back, "hair_back");
   if (outfit.shoes && requirementMet(m.items.find((i) => i.id === outfit.shoes), outfit)) {
     push(outfit.shoes, "shoes");
   }
@@ -1709,7 +1713,7 @@ function renderCloset() {
   // once and left alone.
   for (const [slot, title] of [["top", "tops"], ["bottom", "bottoms"], ["shoes", "shoes"],
                                ["face_acc", "faceAcc"], ["hairstyle", "hairstyle"],
-                               ["hat", "head"]]) {
+                               ["hair_back", "hairBack"], ["hat", "head"]]) {
     // Only what this character has art for. Anything else would render as
     // nothing at all, which reads as a broken item rather than an absent one.
     const items = state.manifest.items.filter(
@@ -1801,7 +1805,8 @@ function setCharacter(id) {
   state.character = id;
   // Slots holding an item this body has no art for would silently render as
   // nothing, so clear them rather than leave an invisible "worn" item.
-  for (const slot of ["hat", "hairstyle", "face_acc", "top", "bottom", "shoes"]) {
+  for (const slot of ["hat", "hairstyle", "hair_back", "face_acc", "top",
+                      "bottom", "shoes"]) {
     const worn = state.outfit[slot];
     if (!worn) continue;
     const it = state.manifest.items.find((i) => i.id === worn);

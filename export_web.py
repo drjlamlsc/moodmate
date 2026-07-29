@@ -35,7 +35,15 @@ ICON_PX = 192      # closet thumbnails
 # A hairstyle accessory sits above face_acc, so it falls over the arm of a pair
 # of glasses, and below hat, so a beanie still goes on over it. Its own slot
 # rather than the hat's: a ponytail and a hat are worn together.
-SLOTS = {"shoes": 5, "bottom": 10, "top": 20, "face": 30, "face_acc": 35,
+# hair_back is the one slot that draws *behind* the base — long hair hangs down
+# the back, so the body, the clothes and the shoes all pass in front of it. The
+# art is only ever the part that shows outside the silhouette (the render was
+# drawn with the character standing in front of it, so the diff never saw the
+# rest), which means a negative z is what makes it correct rather than merely
+# equivalent: at 38 the strip of hair visible between her legs would land on top
+# of a pair of trousers.
+SLOTS = {"hair_back": -10,
+         "shoes": 5, "bottom": 10, "top": 20, "face": 30, "face_acc": 35,
          "hairstyle": 38, "hat": 40}
 
 # Two characters, same canvas and registration. Each item may have art per
@@ -51,7 +59,7 @@ CHARACTERS = [
 # body and hairline, so a borrowed one sits a little wide and may show a gap
 # where the original character's hair used to be. Add per-character art —
 # item_<name>_male.png — and it takes over automatically, no config change.
-FITS_BOTH = {"bottom", "shoes", "top", "hat", "hairstyle", "face_acc"}
+FITS_BOTH = {"bottom", "shoes", "top", "hat", "hairstyle", "hair_back", "face_acc"}
 
 # unlockAt is the number of entries needed before an item can be worn. The
 # starter set is all 0 — everything available from day one. The gating still
@@ -100,6 +108,7 @@ ITEMS = [
     ("sunglasses",      "face_acc", "Sunglasses",       "太陽眼鏡",       0),
     ("ponytail",        "hairstyle", "Ponytail",      "馬尾",           0, "girl"),
     ("curls",           "hairstyle", "Curls",         "捲髮",           0, "girl"),
+    ("longhair",        "hair_back", "Long Hair",     "長髮",           0, "girl"),
     ("beanie",          "hat",    "Pom-Pom Beanie",     "毛球冷帽",       0),
     ("beret",           "hat",    "Rose Beret",         "玫瑰貝雷帽",     0),
     ("male_cap",        "hat",    "Baseball Cap",       "棒球帽",         0),
@@ -126,7 +135,7 @@ REQUIRES = {"geta": "yukata"}
 
 # Items that are made of hair, and so follow the hair colour wholesale rather
 # than by matching the master. See item_hair_mask.
-HAIR_ITEMS = {"ponytail", "curls"}
+HAIR_ITEMS = {"ponytail", "curls", "longhair"}
 
 MOODS = [
     # key      label     face layer (None = master's own face)  colour   zh
