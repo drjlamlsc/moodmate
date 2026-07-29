@@ -133,6 +133,14 @@ COVERS_BOTTOM = {"sundress", "yukata"}
 # off. The value names any item in any slot; nothing here assumes it is a top.
 REQUIRES = {"geta": "yukata"}
 
+# Items that override their slot's z. Shoes sit under the bottoms so a trouser
+# leg falls over them, which is right for a sneaker and wrong for a loafer —
+# it's the shoe you wear *with* trousers, and the five long bottoms were hiding
+# 28-49% of it. Lifting it to 15 puts it over every bottom and still under the
+# tops at 20. Nothing else changes: every skirt and short overlaps the loafer by
+# 0.0%, so the five are the only pairings this can affect.
+Z_OVERRIDE = {"loafers": 15}
+
 # Items that are made of hair, and so follow the hair colour wholesale rather
 # than by matching the master. See item_hair_mask.
 HAIR_ITEMS = {"ponytail", "curls", "longhair"}
@@ -545,6 +553,7 @@ def main():
             "layer": layers, "fits": sorted(fits), "hairMask": hairmasks,
             **({"coversBottom": True} if name in COVERS_BOTTOM else {}),
             **({"requires": REQUIRES[name]} if name in REQUIRES else {}),
+            **({"z": Z_OVERRIDE[name]} if name in Z_OVERRIDE else {}),
         })
 
     # App icons: the character's head on a pastel plate. Home-screen icons are

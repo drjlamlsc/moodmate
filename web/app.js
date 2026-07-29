@@ -715,7 +715,9 @@ function layersFor(mood, outfit, character) {
     // A hat drawn with hair falling over it carries those strands, so it takes
     // a mask too; a garment that is merely lavender does not get one.
     if (it && it.layer[ch]) {
-      out.push({ src: it.layer[ch], z: m.slots[slot], hair,
+      // An item may sit off its slot's z — the loafers ride over the trousers
+      // they are meant to be worn with, while the other shoes stay under.
+      out.push({ src: it.layer[ch], z: it.z != null ? it.z : m.slots[slot], hair,
                  mask: it.hairMask && it.hairMask[ch], bands: cc.hairBands });
     }
   };
