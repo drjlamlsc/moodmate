@@ -584,14 +584,22 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
 # the hem's outline, which is drawn below the last fabric pixel.
 HEM_TRIM = {"yukata": 903, "yukata_male": 896, "sundress": 842}
 
-# Items taken from the render as drawn, with the row to cut at: exactly where
-# the yukata layer's own HEM_TRIM stops, so the two meet with no gap and no
-# overlap. Everything below that row is kept untouched — hem, foot, sandal —
+# Only the girl's render is used. Hers covers the boy's legs to within 31px,
+# while his own render stands his feet wider apart than his body does and left
+# 470px of shin showing between the sandals — the two bodies' feet differ by
+# 1-3px, so one pair genuinely fits both, as with the sneakers.
+#
+# Items taken from the render as drawn, with the row to cut at. It sits ABOVE
+# where the yukata layer stops, not level with it: the two renders draw the hem
+# slightly differently, and cutting level left white notches beside the ankles
+# where this render's hem is the wider of the two and nothing covered the
+# difference. Overlapping costs nothing — those rows sit under the yukata at
+# z=20 — and takes the holes from 296 to 64. Everything below that row is kept untouched — hem, foot, sandal —
 # and nothing is picked out of it. That is the point: the render already shows
 # a foot standing in a sandal, and any attempt to keep one and not the other
 # left a seam, because the base's foot underneath differs from this one by a
 # median of 91. Kept whole, the layer simply covers the base's foot stubs.
-AS_DRAWN = {"geta": 903, "geta_male": 896}
+AS_DRAWN = {"geta": 880}
 
 ACCESSORIES = {"roundglasses"}
 

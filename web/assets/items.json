@@ -467,7 +467,7 @@
       "icon": "icon_geta.png",
       "layer": {
         "girl": "item_geta.png",
-        "boy": "item_geta_male.png"
+        "boy": "item_geta.png"
       },
       "fits": [
         "boy",
@@ -789,5 +789,5 @@
       }
     }
   ],
-  "build": "30da103ad2"
+  "build": "b7a14b389e"
 }
