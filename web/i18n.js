@@ -68,7 +68,6 @@ const STRINGS = {
   bottoms:          { en: "Bottoms",          zh: "下身" },
   shoes:            { en: "Shoes",            zh: "鞋履" },
   hairstyle:        { en: "Hair",             zh: "髮型" },
-  hairBack:         { en: "Long Hair",        zh: "長髮" },
   none:             { en: "None",             zh: "無" },
   coveredByDress:   { en: "covered by dress",  zh: "被洋裝遮蓋" },
   entriesLogged:    { en: "entries logged",   zh: "條記錄" },

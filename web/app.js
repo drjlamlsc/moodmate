@@ -1711,13 +1711,23 @@ function renderCloset() {
   // Clothes first, accessories after: tops and bottoms are what gets changed
   // most, and they were sitting below two accessory sections that are picked
   // once and left alone.
-  for (const [slot, title] of [["top", "tops"], ["bottom", "bottoms"], ["shoes", "shoes"],
-                               ["face_acc", "faceAcc"], ["hairstyle", "hairstyle"],
-                               ["hair_back", "hairBack"], ["hat", "head"]]) {
+  // A section lists slots, not one slot. Long hair draws behind the character
+  // and a ponytail in front, so they need different z — but to someone picking
+  // an outfit they are one thing, and a closet split by z would be showing off
+  // an implementation detail. Each item still wears into its own slot, but the
+  // section is one radio group across all of them — picking any hairstyle takes
+  // off whichever one was on.
+  for (const [group, title] of [[["top"], "tops"], [["bottom"], "bottoms"],
+                                [["shoes"], "shoes"], [["face_acc"], "faceAcc"],
+                                [["hairstyle", "hair_back"], "hairstyle"],
+                                [["hat"], "head"]]) {
+    // The first slot names the section — for the open/closed memory below, and
+    // for the dimming rule, both of which are about the section, not the items.
+    const slot = group[0];
     // Only what this character has art for. Anything else would render as
     // nothing at all, which reads as a broken item rather than an absent one.
     const items = state.manifest.items.filter(
-      (i) => i.slot === slot && i.fits.includes(state.character)
+      (i) => group.includes(i.slot) && i.fits.includes(state.character)
              && requirementMet(i, state.outfit));
     if (!items.length) continue;
     // <details> rather than a hand-rolled toggle: it collapses without script,
@@ -1761,9 +1771,9 @@ function renderCloset() {
     const none = document.createElement("button");
     none.className = "card none-card";
     none.textContent = t("none");
-    none.setAttribute("aria-pressed", String(!state.outfit[slot]));
+    none.setAttribute("aria-pressed", String(group.every((s) => !state.outfit[s])));
     none.onclick = () => {
-      state.outfit[slot] = null;
+      for (const s of group) state.outfit[s] = null;
       dropUnmetRequirements(state.outfit);
       save(); renderCloset(); renderToday();
     };
@@ -1773,7 +1783,7 @@ function renderCloset() {
       const locked = total < it.unlockAt;
       const card = document.createElement("button");
       card.className = "card" + (locked ? " locked" : "");
-      card.setAttribute("aria-pressed", String(state.outfit[slot] === it.id));
+      card.setAttribute("aria-pressed", String(state.outfit[it.slot] === it.id));
       const img = new Image();
       img.src = asset(it.icon);
       img.alt = nameOf(it);
@@ -1789,7 +1799,11 @@ function renderCloset() {
         card.disabled = true;
       } else {
         card.onclick = () => {
-          state.outfit[slot] = state.outfit[slot] === it.id ? null : it.id;
+          // One pick per section even where the section spans slots: the two
+          // hair slots exist for z, not to be worn two at a time.
+          const off = state.outfit[it.slot] === it.id;
+          for (const s of group) state.outfit[s] = null;
+          if (!off) state.outfit[it.slot] = it.id;
           dropUnmetRequirements(state.outfit);
           save(); renderCloset(); renderToday();
         };
