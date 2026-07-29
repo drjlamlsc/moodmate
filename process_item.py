@@ -576,6 +576,13 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
     out = T.copy()
     out[..., 3] = np.where(mask, T[..., 3], 0)
     layer = Image.fromarray(out.astype("uint8"))
+    if name in SCALE:
+        before = layer.getbbox()
+        layer = scale_layer(layer, SCALE[name])
+        after = layer.getbbox()
+        print("scaled to %.2f: %dx%d -> %dx%d, bottom %d -> %d"
+              % (SCALE[name], before[2] - before[0], before[3] - before[1],
+                 after[2] - after[0], after[3] - after[1], before[3], after[3]))
     layer.save(os.path.join(here, "items", "item_%s.png" % name))
 
     # A standalone drawing of the garment, if one was supplied beside the
@@ -606,8 +613,9 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
 
     err = np.abs(flat(np.array(worn).astype(int)) - flat(T)).max(axis=2)
     print("item %d px, icon %s" % (mask.sum(), icon.size))
-    print("worn vs render: mean %.2f, >60 on %.3f%% of pixels" %
-          (err.mean(), (err > 60).mean() * 100))
+    print("worn vs render: mean %.2f, >60 on %.3f%% of pixels%s" %
+          (err.mean(), (err > 60).mean() * 100,
+           " (resized on purpose — see SCALE)" if name in SCALE else ""))
     print("check qa/%s_alone.png for stray pixels." % name)
 
 
@@ -672,6 +680,31 @@ AS_DRAWN = {"geta": 880}
 KEEP_INNER_WHITE = {"maryjanes"}
 
 ACCESSORIES = {"roundglasses"}
+
+# Layers the generator drew oversized, and what to multiply them by. The
+# sneakers came back 254px wide and reaching to y=998, against 236/968 for the
+# loafers and 189/986 for the Mary Janes, on a bare foot that is 150px wide and
+# ends at 939 — the widest and the lowest of the three, which is what read as
+# too big. Scaled about the TOP CENTRE of its own bounding box, so the opening
+# stays on the ankle where the leg enters it and only the sole moves.
+SCALE = {"sneakers": 0.93}
+
+
+def scale_layer(layer, factor):
+    """Shrink a registered layer in place on the canvas, about its top centre.
+
+    Crop-resize-paste rather than an affine transform: resizing the tight crop
+    lets it go through LANCZOS, which a whole-canvas transform can't use, and a
+    shoe is mostly outline — bilinear softens those edges visibly at this size.
+    """
+    box = layer.getbbox()
+    crop = layer.crop(box)
+    small = crop.resize((max(1, round(crop.width * factor)),
+                         max(1, round(crop.height * factor))), Image.LANCZOS)
+    cx = (box[0] + box[2] - 1) / 2.0
+    out = Image.new("RGBA", layer.size, (0, 0, 0, 0))
+    out.paste(small, (round(cx - (cx - box[0]) * factor), box[1]))
+    return out
 
 DARK_OVERRIDES = {"male_gakuran": 55, "sailor": 55, "male_tie_shirt": 55,
                   # Her navy fill sits at luminance 50, and the automatic step
