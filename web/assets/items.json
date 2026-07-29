@@ -6,6 +6,7 @@
     "top": 20,
     "face": 30,
     "face_acc": 35,
+    "hairstyle": 38,
     "hat": 40
   },
   "characters": [
@@ -579,6 +580,23 @@
       "hairMask": {}
     },
     {
+      "id": "ponytail",
+      "slot": "hairstyle",
+      "label": "Ponytail",
+      "label_zh": "\u99ac\u5c3e",
+      "unlockAt": 0,
+      "icon": "icon_ponytail.png",
+      "layer": {
+        "girl": "item_ponytail.png"
+      },
+      "fits": [
+        "girl"
+      ],
+      "hairMask": {
+        "girl": "item_ponytail_hair.png"
+      }
+    },
+    {
       "id": "beanie",
       "slot": "hat",
       "label": "Pom-Pom Beanie",
@@ -823,5 +841,5 @@
       }
     }
   ],
-  "build": "3acde74e93"
+  "build": "0eba7730c6"
 }

@@ -32,7 +32,11 @@ ICON_PX = 192      # closet thumbnails
 # bottom edge at 938, so those three hide a shoe completely rather than
 # leaving a toe. Joggers (915) and cargo pants (920) leave the shoe showing,
 # and every skirt and short ends far above the ankle.
-SLOTS = {"shoes": 5, "bottom": 10, "top": 20, "face": 30, "face_acc": 35, "hat": 40}
+# A hairstyle accessory sits above face_acc, so it falls over the arm of a pair
+# of glasses, and below hat, so a beanie still goes on over it. Its own slot
+# rather than the hat's: a ponytail and a hat are worn together.
+SLOTS = {"shoes": 5, "bottom": 10, "top": 20, "face": 30, "face_acc": 35,
+         "hairstyle": 38, "hat": 40}
 
 # Two characters, same canvas and registration. Each item may have art per
 # character; where it doesn't, see FITS_BOTH below.
@@ -47,7 +51,7 @@ CHARACTERS = [
 # body and hairline, so a borrowed one sits a little wide and may show a gap
 # where the original character's hair used to be. Add per-character art —
 # item_<name>_male.png — and it takes over automatically, no config change.
-FITS_BOTH = {"bottom", "shoes", "top", "hat", "face_acc"}
+FITS_BOTH = {"bottom", "shoes", "top", "hat", "hairstyle", "face_acc"}
 
 # unlockAt is the number of entries needed before an item can be worn. The
 # starter set is all 0 — everything available from day one. The gating still
@@ -94,6 +98,7 @@ ITEMS = [
     ("squareglasses",   "face_acc", "Square Glasses",   "方框眼鏡",       0),
     ("heartglasses",    "face_acc", "Heart Glasses",    "心形眼鏡",       0),
     ("sunglasses",      "face_acc", "Sunglasses",       "太陽眼鏡",       0),
+    ("ponytail",        "hairstyle", "Ponytail",      "馬尾",           0, "girl"),
     ("beanie",          "hat",    "Pom-Pom Beanie",     "毛球冷帽",       0),
     ("beret",           "hat",    "Rose Beret",         "玫瑰貝雷帽",     0),
     ("male_cap",        "hat",    "Baseball Cap",       "棒球帽",         0),
@@ -117,6 +122,10 @@ COVERS_BOTTOM = {"sundress", "yukata"}
 # closet only shows it while one is on, and takes it off when the yukata comes
 # off. The value names any item in any slot; nothing here assumes it is a top.
 REQUIRES = {"geta": "yukata"}
+
+# Items that are made of hair, and so follow the hair colour wholesale rather
+# than by matching the master. See item_hair_mask.
+HAIR_ITEMS = {"ponytail"}
 
 MOODS = [
     # key      label     face layer (None = master's own face)  colour   zh
@@ -225,7 +234,7 @@ def face_hair_mask(path):
     return Image.fromarray(np.where(m, 255, 0).astype("uint8"), "L")
 
 
-def item_hair_mask(item_path, master_paths, min_px=1500):
+def item_hair_mask(item_path, master_paths, min_px=1500, by_colour=False):
     """Hair mask for a garment layer that redraws hair, or None if it doesn't.
 
     A wide-brimmed hat is drawn with the hair falling in front of it, so those
@@ -249,6 +258,18 @@ def item_hair_mask(item_path, master_paths, min_px=1500):
     rgb, alpha = a[..., :3], a[..., 3] > 10
     r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
     violet = alpha & ((b - g) >= 15) & ((r - g) >= 5)
+
+    # An item that IS hair rather than one that merely redraws some. The seed
+    # test below cannot see it: it looks for pixels matching the master, and a
+    # ponytail exists in no master, so it seeds nothing, gets no mask, and stays
+    # lavender while the head it hangs off turns red. Here the colour test is
+    # the whole answer, because the layer holds nothing else that is violet —
+    # measured on the ponytail, 37728px of hair against 5609px of coral ribbon,
+    # which the same test excludes on its own.
+    if by_colour:
+        if violet.sum() < min_px:
+            return None
+        return Image.fromarray(np.where(violet, 255, 0).astype("uint8"), "L")
 
     # Matching the base pixel for pixel proves hair, but only in bulk. A
     # lavender hat over lavender hair matches here and there by chance, and
@@ -485,7 +506,8 @@ def main():
                     # A hat drawn with hair falling over it carries those
                     # strands in its own layer; they must follow the colour too.
                     imask = item_hair_mask(
-                        src, [os.path.join(HERE, c[3]) for c in CHARACTERS])
+                        src, [os.path.join(HERE, c[3]) for c in CHARACTERS],
+                        by_colour=name in HAIR_ITEMS)
                     if imask is not None:
                         iname = "item_%s_hair.png" % candidate
                         total += write_hair_mask(

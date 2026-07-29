@@ -51,7 +51,8 @@ const DEFAULT_TAGS = [
 // corrupt storage, and a slot added to only two of those three is a slot that
 // silently never loads.
 function emptyOutfit() {
-  return { hat: null, top: null, bottom: null, shoes: null, face_acc: null, hair: null };
+  return { hat: null, hairstyle: null, top: null, bottom: null, shoes: null,
+           face_acc: null, hair: null };
 }
 
 const state = {
@@ -736,6 +737,8 @@ function layersFor(mood, outfit, character) {
   }
   // Above the expression, below hats: a frame covers the eyes, a brim covers it.
   if (outfit.face_acc) push(outfit.face_acc, "face_acc");
+  // Above the glasses, under the hats — see SLOTS.
+  if (outfit.hairstyle) push(outfit.hairstyle, "hairstyle");
   if (outfit.hat) push(outfit.hat, "hat");
   return out.sort((a, b) => a.z - b.z);
 }
@@ -1705,7 +1708,8 @@ function renderCloset() {
   // most, and they were sitting below two accessory sections that are picked
   // once and left alone.
   for (const [slot, title] of [["top", "tops"], ["bottom", "bottoms"], ["shoes", "shoes"],
-                               ["face_acc", "faceAcc"], ["hat", "head"]]) {
+                               ["face_acc", "faceAcc"], ["hairstyle", "hairstyle"],
+                               ["hat", "head"]]) {
     // Only what this character has art for. Anything else would render as
     // nothing at all, which reads as a broken item rather than an absent one.
     const items = state.manifest.items.filter(
@@ -1797,7 +1801,7 @@ function setCharacter(id) {
   state.character = id;
   // Slots holding an item this body has no art for would silently render as
   // nothing, so clear them rather than leave an invisible "worn" item.
-  for (const slot of ["hat", "face_acc", "top", "bottom", "shoes"]) {
+  for (const slot of ["hat", "hairstyle", "face_acc", "top", "bottom", "shoes"]) {
     const worn = state.outfit[slot];
     if (!worn) continue;
     const it = state.manifest.items.find((i) => i.id === worn);
