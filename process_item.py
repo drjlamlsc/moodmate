@@ -543,6 +543,30 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
     # z=20 and a shoe at z=5, so redrawn feet cover the shoe underneath. Cutting
     # the layer a few pixels below the hem hands the feet back to the base,
     # where footwear can reach them.
+    if name in TOP_TRIM:
+        cut = TOP_TRIM[name]
+        dropped = int(mask[:cut].sum())
+        mask[:cut] = False
+        # Below the cut the same two strips continue for a while, running up
+        # between the ankles until the shoes swallow them. In this band they are
+        # 5-7px wide against the 30-60px of the shoe's own topline, so width
+        # separates them where a row cannot.
+        for y in range(cut, min(cut + 40, mask.shape[0])):
+            xs = np.nonzero(mask[y])[0]
+            if not len(xs):
+                continue
+            runs, start = [], xs[0]
+            for i in range(1, len(xs)):
+                if xs[i] > xs[i - 1] + 1:
+                    runs.append((start, xs[i - 1]))
+                    start = xs[i]
+            runs.append((start, xs[-1]))
+            for a0, b0 in runs:
+                if b0 - a0 + 1 < 12:
+                    mask[y, a0:b0 + 1] = False
+                    dropped += b0 - a0 + 1
+        print("top trim: dropped %d px above y=%d and slivers below it" % (dropped, cut))
+
     if name in HEM_TRIM:
         cut = HEM_TRIM[name]
         dropped = int(mask[cut:].sum())
@@ -621,6 +645,15 @@ HEM_TRIM = {"yukata": 903, "yukata_male": 896, "sundress": 842}
 # 470px of shin showing between the sandals — the two bodies' feet differ by
 # 1-3px, so one pair genuinely fits both, as with the sneakers.
 #
+# Shoe layers, and the row their art actually starts on. A render redraws the
+# legs a shade differently from the master, and the diff catches their inner
+# outlines: two long thin strips running up from the socks, which composite as
+# a second pair of shins beside the real ones once shorts or a skirt leave the
+# legs bare. Measured as the first row carrying more than a sliver — 50px —
+# which lands just above the sock cuff on the Mary Janes and the topline on the
+# loafers. The sneakers and geta start at their art already and need no entry.
+TOP_TRIM = {"maryjanes": 856, "loafers": 865}
+
 # Items taken from the render as drawn, with the row to cut at. It sits ABOVE
 # where the yukata layer stops, not level with it: the two renders draw the hem
 # slightly differently, and cutting level left white notches beside the ankles
