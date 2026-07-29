@@ -133,13 +133,11 @@ COVERS_BOTTOM = {"sundress", "yukata"}
 # off. The value names any item in any slot; nothing here assumes it is a top.
 REQUIRES = {"geta": "yukata"}
 
-# Items that override their slot's z. Shoes sit under the bottoms so a trouser
-# leg falls over them, which is right for a sneaker and wrong for a loafer —
-# it's the shoe you wear *with* trousers, and the five long bottoms were hiding
-# 28-49% of it. Lifting it to 15 puts it over every bottom and still under the
-# tops at 20. Nothing else changes: every skirt and short overlaps the loafer by
-# 0.0%, so the five are the only pairings this can affect.
-Z_OVERRIDE = {"loafers": 15}
+# Items that override their slot's z. Empty: the loafers were lifted over the
+# bottoms for a while, and that was the wrong fix for the right complaint — see
+# HEM_TRIM in process_item.py. The hook is kept because it is one line and the
+# next item that wants it will want it for a better reason.
+Z_OVERRIDE = {}
 
 # Items that are made of hair, and so follow the hair colour wholesale rather
 # than by matching the master. See item_hair_mask.

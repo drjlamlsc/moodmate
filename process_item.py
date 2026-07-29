@@ -646,7 +646,19 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
 # stops: yukata 897, its male render 890, the sundress's skirt 838. Measured
 # from the fabric's own colour rather than guessed, and set low enough to keep
 # the hem's outline, which is drawn below the last fabric pixel.
-HEM_TRIM = {"yukata": 903, "yukata_male": 896, "sundress": 842}
+#
+# The five long bottoms are here for a different reason with the same cure.
+# Each render draws a bare foot peeking out under the hem, and the contour fill
+# swept it into the layer: two skin-coloured blobs about 49px wide that keep the
+# row count flat at ~98 all the way down to y=936, long after the hem itself has
+# tapered away. Over a bare leg they were invisible, being the base's own foot
+# redrawn — but a bottom sits at z=10 and a shoe at z=5, so against a loafer
+# they painted a naked instep across the top of the shoe. Cut where each hem's
+# own dark outline finishes, which is the row the taper reaches before the
+# plateau begins.
+HEM_TRIM = {"yukata": 903, "yukata_male": 896, "sundress": 842,
+            "jeans": 914, "gakuran_pants": 914, "pyjama_pants": 916,
+            "joggers": 911, "cargo_pants": 914}
 
 # Only the girl's render is used. Hers covers the boy's legs to within 31px,
 # while his own render stands his feet wider apart than his body does and left

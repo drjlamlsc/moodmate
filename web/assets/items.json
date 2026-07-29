@@ -492,8 +492,7 @@
         "boy",
         "girl"
       ],
-      "hairMask": {},
-      "z": 15
+      "hairMask": {}
     },
     {
       "id": "geta",
@@ -877,5 +876,5 @@
       }
     }
   ],
-  "build": "ab938df62b"
+  "build": "e06987eaeb"
 }
