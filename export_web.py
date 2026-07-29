@@ -87,6 +87,8 @@ ITEMS = [
     ("gakuran_pants",   "bottom", "Uniform Trousers",   "學生褲",         0),
     ("pyjama_pants",    "bottom", "Pyjama Pants",       "睡褲",           0),
     ("sneakers",        "shoes",  "Canvas Sneakers",    "帆布鞋",         0),
+    ("maryjanes",       "shoes",  "Mary Janes",         "瑪莉珍鞋",       0),
+    ("loafers",         "shoes",  "Loafers",            "樂福鞋",         0),
     ("geta",            "shoes",  "Wooden Geta",        "木屐",           0),
     ("roundglasses",    "face_acc", "Round Glasses",    "圓框眼鏡",       0),
     ("squareglasses",   "face_acc", "Square Glasses",   "方框眼鏡",       0),

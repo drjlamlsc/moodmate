@@ -459,6 +459,40 @@
       "hairMask": {}
     },
     {
+      "id": "maryjanes",
+      "slot": "shoes",
+      "label": "Mary Janes",
+      "label_zh": "\u746a\u8389\u73cd\u978b",
+      "unlockAt": 0,
+      "icon": "icon_maryjanes.png",
+      "layer": {
+        "girl": "item_maryjanes.png",
+        "boy": "item_maryjanes.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ],
+      "hairMask": {}
+    },
+    {
+      "id": "loafers",
+      "slot": "shoes",
+      "label": "Loafers",
+      "label_zh": "\u6a02\u798f\u978b",
+      "unlockAt": 0,
+      "icon": "icon_loafers.png",
+      "layer": {
+        "girl": "item_loafers.png",
+        "boy": "item_loafers.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ],
+      "hairMask": {}
+    },
+    {
       "id": "geta",
       "slot": "shoes",
       "label": "Wooden Geta",
@@ -789,5 +823,5 @@
       }
     }
   ],
-  "build": "b7a14b389e"
+  "build": "e780231152"
 }

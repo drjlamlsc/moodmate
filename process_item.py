@@ -103,7 +103,7 @@ def outside(mask):
     return vis
 
 
-def cut_background(render, master, level=242, chroma=12):
+def cut_background(render, master, level=242, chroma=12, keep_inner_white=False):
     """Drop the white plate the model renders on, and return RGBA.
 
     Brightness alone can't identify the plate: this palette's lightest pastels
@@ -116,6 +116,20 @@ def cut_background(render, master, level=242, chroma=12):
     Plate pockets sealed inside the drawing (between hair and shoulder, say)
     are judged against the master: transparent there means it's a real gap in
     the silhouette, opaque means it's part of the artwork and must be kept.
+
+    That test alone loses white *inside* an item. A Mary Jane's strap button is
+    a white disc on a black shoe, and the shoe hangs below the body, so the
+    master is empty there and the button was cut out as background — a hole in
+    the middle of the shoe. `keep_inner_white` keeps such a pocket when it is
+    ringed by the item rather than by the body: gaps ring at 0.18-0.48 changed
+    pixels, internal highlights at 0.94-1.0.
+
+    It is opt-in rather than the default because the ring alone is not a proof.
+    The striped sweater's collar seals a triangle of background between jaw and
+    hair, and the collar redraws enough around it to ring at 0.94 — keeping that
+    puts a white wedge on the character wherever the card behind is not white.
+    Every item without the flag extracts exactly as before; that was checked,
+    not assumed, across the fourteen renders with sealed pockets.
     """
     a = np.array(render.convert("RGBA")).astype(int)
     rgb = a[..., :3]
@@ -125,14 +139,32 @@ def cut_background(render, master, level=242, chroma=12):
     pockets = near_white & ~bg
     plab, pcomps = components(pockets)
     ma = np.array(master.convert("RGBA"))[..., 3]
-    dropped = 0
+    changed = np.abs(flat(a) - flat(np.array(master.convert("RGBA")).astype(int))
+                     ).max(axis=2) > REPAINT
+    dropped = kept = 0
     for cid, n in pcomps:
         if n < 40:
             continue
         reg = plab == cid
-        if (ma[reg] <= 10).mean() > 0.8:   # master is empty here too: a real gap
-            bg |= reg
-            dropped += n
+        if (ma[reg] <= 10).mean() <= 0.8:  # master is opaque: artwork, keep
+            continue
+        ys, xs = np.nonzero(reg)
+        h, w = ys.max() - ys.min() + 1, xs.max() - xs.min() + 1
+        sliver = max(h, w) / float(min(h, w))
+        if keep_inner_white:
+            ring = morph(reg, "dilate", 2) & ~reg
+            # Shape as well as ring: the gap between two trouser legs is walled
+            # by the trousers on every side and rings as high as any highlight,
+            # but gives itself away as 7x77 on the pyjamas, 2x37 on the jeans,
+            # 3x64 on the gakuran trousers — far past the 1.0-3.1 of real
+            # highlights and the 7.0 of the thinnest sneaker opening.
+            if changed[ring].mean() >= 0.92 and sliver <= 8:
+                kept += n
+                continue
+        bg |= reg                          # master empty and body-ringed: a real gap
+        dropped += n
+    if kept:
+        print("kept %d px of white sealed inside the item" % kept)
     print("background: %d px outer, %d px sealed pockets" % (int(bg.sum()) - dropped, dropped))
 
     a[..., 3] = np.where(bg, 0, 255)
@@ -180,7 +212,7 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
     # Models render on an opaque white plate, so cut it ourselves. If the file
     # already carries real transparency it has been cut elsewhere; leave it be.
     if (np.array(render)[..., 3] > 10).mean() > 0.98:
-        render = cut_background(render, master)
+        render = cut_background(render, master, keep_inner_white=name in KEEP_INNER_WHITE)
     else:
         print("background: already transparent, left alone")
 
@@ -601,6 +633,11 @@ HEM_TRIM = {"yukata": 903, "yukata_male": 896, "sundress": 842}
 # median of 91. Kept whole, the layer simply covers the base's foot stubs.
 AS_DRAWN = {"geta": 880}
 
+# Items whose own artwork contains sealed white — see cut_background. The Mary
+# Jane's strap button is a white disc surrounded by black patent, and the shoe
+# hangs below the body, so nothing but this flag keeps it.
+KEEP_INNER_WHITE = {"maryjanes"}
+
 ACCESSORIES = {"roundglasses"}
 
 DARK_OVERRIDES = {"male_gakuran": 55, "sailor": 55, "male_tie_shirt": 55,
@@ -622,7 +659,13 @@ DARK_OVERRIDES = {"male_gakuran": 55, "sailor": 55, "male_tie_shirt": 55,
                   # measure the same, so both take the same value. Over 40% of
                   # each figure sits below the default threshold — the automatic
                   # step would fire here, which is exactly why it is pinned.
-                  "yukata": 50, "yukata_male": 50}
+                  "yukata": 50, "yukata_male": 50,
+                  # Brown leather, and the first item to need this for being
+                  # merely mid-tone rather than dark: the fill sits at 90-110,
+                  # under the default 115, so the whole shoe read as line art
+                  # and the run aborted with no regions. The trough between the
+                  # ink at 20-40 and the leather at 90-110 is wide and empty.
+                  "loafers": 80}
 
 
 if __name__ == "__main__":
