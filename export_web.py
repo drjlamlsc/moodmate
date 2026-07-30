@@ -112,7 +112,12 @@ ITEMS = [
     ("ponytail",        "hairstyle", "Ponytail",      "馬尾",           0, "girl"),
     ("curls",           "hairstyle", "Curls",         "捲髮",           0, "girl"),
     ("longhair",        "hair_back", "Long Hair",     "長髮",           0, "girl"),
+    # No boy render, but unlike the ponytail and the curls it does not need one:
+    # the bun sits on the crown and her art lands on his head with the join
+    # covered and no gap, so it is left to the FITS_BOTH borrowing.
+    ("topknot",         "hairstyle", "Top Knot",      "丸子頭",         0),
     ("beanie",          "hat",    "Pom-Pom Beanie",     "毛球冷帽",       0),
+    ("earmuffs",        "hat",    "Fluffy Earmuffs",    "毛毛耳罩",       0),
     ("beret",           "hat",    "Rose Beret",         "玫瑰貝雷帽",     0),
     ("male_cap",        "hat",    "Baseball Cap",       "棒球帽",         0),
     ("flower_crown",    "hat",    "Flower Crown",       "雛菊花環",       0),
@@ -144,7 +149,7 @@ Z_OVERRIDE = {}
 
 # Items that are made of hair, and so follow the hair colour wholesale rather
 # than by matching the master. See item_hair_mask.
-HAIR_ITEMS = {"ponytail", "curls", "longhair"}
+HAIR_ITEMS = {"ponytail", "curls", "longhair", "topknot"}
 
 MOODS = [
     # key      label     face layer (None = master's own face)  colour   zh

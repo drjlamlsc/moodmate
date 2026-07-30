@@ -573,12 +573,21 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
         mask[cut:] = False
         print("hem trim: dropped %d px below y=%d" % (dropped, cut))
 
-    if name in FILL_HOLES:
-        added = fill_enclosed(mask, FILL_HOLES[name])
-        print("hole fill: closed %d px of enclosed island" % added)
-
     out = T.copy()
     out[..., 3] = np.where(mask, T[..., 3], 0)
+
+    # After assembly, not before. The mask can hold a pixel that still comes out
+    # transparent, because the alpha is taken from the cut render and a white
+    # highlight sealed inside the artwork was read as background there — which
+    # is exactly how the bun lost its highlight. Closing islands in the finished
+    # alpha catches that as well as anything the region logic dropped, and needs
+    # to know nothing about which step did it. The colour is already correct
+    # underneath: cutting the background zeroes alpha and leaves RGB alone.
+    if name in FILL_HOLES:
+        alpha = out[..., 3] > 10
+        added = fill_enclosed(alpha, FILL_HOLES[name])
+        out[..., 3] = np.where(alpha, 255, out[..., 3])
+        print("hole fill: closed %d px of enclosed island" % added)
     layer = Image.fromarray(out.astype("uint8"))
     if name in SCALE:
         before = layer.getbbox()
@@ -703,7 +712,17 @@ KEEP_INNER_WHITE = {"maryjanes"}
 # outline, the waistband and a pleat line meet, which the render draws in plain
 # rust — so it is fabric, and the white shorts underneath were showing through
 # it. 600 clears that island and nothing else in the layer.
-FILL_HOLES = {"culottes": 600}
+#
+# The top knot and his earmuffs lose near-white artwork the same way — the bun's
+# 452px highlight sealed inside lavender hair, and 2515px of the white fluff on
+# his left muff across three islands. KEEP_INNER_WHITE, which exists for exactly
+# that shape of problem, is a no-op on both: the layer px do not move, so
+# cut_background is not what dropped them. Closing the island in the finished
+# mask is, and it does not care which earlier step lost it.
+#
+# Her earmuffs are NOT listed. The same art on her head came out with no
+# enclosed islands at all, so there is nothing to close.
+FILL_HOLES = {"culottes": 600, "topknot": 600, "earmuffs_male": 1600}
 
 
 def fill_enclosed(mask, max_px):

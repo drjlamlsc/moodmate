@@ -683,6 +683,26 @@
       }
     },
     {
+      "id": "topknot",
+      "slot": "hairstyle",
+      "label": "Top Knot",
+      "label_zh": "\u4e38\u5b50\u982d",
+      "unlockAt": 0,
+      "icon": "icon_topknot.png",
+      "layer": {
+        "girl": "item_topknot.png",
+        "boy": "item_topknot.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ],
+      "hairMask": {
+        "girl": "item_topknot_hair.png",
+        "boy": "item_topknot_hair.png"
+      }
+    },
+    {
       "id": "beanie",
       "slot": "hat",
       "label": "Pom-Pom Beanie",
@@ -692,6 +712,23 @@
       "layer": {
         "girl": "item_beanie.png",
         "boy": "item_beanie_male.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ],
+      "hairMask": {}
+    },
+    {
+      "id": "earmuffs",
+      "slot": "hat",
+      "label": "Fluffy Earmuffs",
+      "label_zh": "\u6bdb\u6bdb\u8033\u7f69",
+      "unlockAt": 0,
+      "icon": "icon_earmuffs.png",
+      "layer": {
+        "girl": "item_earmuffs.png",
+        "boy": "item_earmuffs_male.png"
       },
       "fits": [
         "boy",
@@ -927,5 +964,5 @@
       }
     }
   ],
-  "build": "f20700e534"
+  "build": "ebdefd9caa"
 }
