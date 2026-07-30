@@ -573,6 +573,10 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
         mask[cut:] = False
         print("hem trim: dropped %d px below y=%d" % (dropped, cut))
 
+    if name in FILL_HOLES:
+        added = fill_enclosed(mask, FILL_HOLES[name])
+        print("hole fill: closed %d px of enclosed island" % added)
+
     out = T.copy()
     out[..., 3] = np.where(mask, T[..., 3], 0)
     layer = Image.fromarray(out.astype("uint8"))
@@ -691,6 +695,41 @@ AS_DRAWN = {"geta": 880}
 # hangs below the body, so nothing but this flag keeps it.
 KEEP_INNER_WHITE = {"maryjanes"}
 
+# item -> the largest transparent island, in px, to close up inside the finished
+# layer. Opt-in and not a global rule, because a swept sample of all 45 layers
+# says a global one would wreck things: the round glasses enclose 9920px of lens
+# and the crop tee 479px of bare midriff, and both are supposed to be see-
+# through. The culottes have one 465px island on the right hip where the arm
+# outline, the waistband and a pleat line meet, which the render draws in plain
+# rust — so it is fabric, and the white shorts underneath were showing through
+# it. 600 clears that island and nothing else in the layer.
+FILL_HOLES = {"culottes": 600}
+
+
+def fill_enclosed(mask, max_px):
+    """Close transparent islands fully surrounded by the layer. Returns px added.
+
+    Only islands that touch none of the layer's bounding-box edges count — an
+    open bay, like the gap between two trouser legs, reaches an edge and is left
+    alone. The filled pixels take their colour from the render, so they come out
+    as whatever the artwork already had there.
+    """
+    ys, xs = np.nonzero(mask)
+    y0, y1, x0, x1 = ys.min(), ys.max(), xs.min(), xs.max()
+    box = np.zeros_like(mask)
+    box[y0:y1 + 1, x0:x1 + 1] = True
+    lab, comps = components(~mask & box)
+    added = 0
+    for cid, n in comps:
+        if n > max_px:
+            continue
+        reg = lab == cid
+        ry, rx = np.nonzero(reg)
+        if ry.min() > y0 and ry.max() < y1 and rx.min() > x0 and rx.max() < x1:
+            mask |= reg
+            added += n
+    return added
+
 ACCESSORIES = {"roundglasses"}
 
 # Layers the generator drew oversized, and what to multiply them by. The
@@ -743,7 +782,23 @@ DARK_OVERRIDES = {"male_gakuran": 55, "sailor": 55, "male_tie_shirt": 55,
                   # under the default 115, so the whole shoe read as line art
                   # and the run aborted with no regions. The trough between the
                   # ink at 20-40 and the leather at 90-110 is wide and empty.
-                  "loafers": 80}
+                  "loafers": 80,
+                  # Grey tartan is the pattern this threshold handles worst,
+                  # and for a new reason: the cloth is achromatic, so the
+                  # chroma test that rescues a navy collar cannot tell its
+                  # grey from ink. The garment's histogram is two fill spikes
+                  # at 80-89 and 130-139 over a spread of 20-55 that is ink
+                  # and charcoal overcheck mixed, with a clean trough at 66
+                  # (254px, against 1500 at 80). 61.9% of the garment sits
+                  # below 115, but the trousers are too small a share of the
+                  # whole figure to trip DARK_SHARE, so the loop stayed quiet
+                  # and everything below the knee was read as line art and
+                  # dropped.
+                  # His render carries the same two fill spikes shifted lighter
+                  # — 90-99 and 130-139 against her 80-89 and 130-139 — so its
+                  # trough sits at 76 (213px) rather than 66. Same garment, same
+                  # failure, different number: measure each render, don't share.
+                  "tartan_pants": 66, "tartan_pants_male": 76}
 
 
 if __name__ == "__main__":

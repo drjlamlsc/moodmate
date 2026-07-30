@@ -138,6 +138,23 @@
       "hairMask": {}
     },
     {
+      "id": "varsity",
+      "slot": "top",
+      "label": "Varsity Jacket",
+      "label_zh": "\u68d2\u7403\u5916\u5957",
+      "unlockAt": 0,
+      "icon": "icon_varsity.png",
+      "layer": {
+        "girl": "item_varsity.png",
+        "boy": "item_varsity_male.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ],
+      "hairMask": {}
+    },
+    {
       "id": "sailor",
       "slot": "top",
       "label": "Sailor Blouse",
@@ -359,6 +376,23 @@
       "hairMask": {}
     },
     {
+      "id": "culottes",
+      "slot": "bottom",
+      "label": "Culottes",
+      "label_zh": "\u5bec\u8932\u88d9",
+      "unlockAt": 0,
+      "icon": "icon_culottes.png",
+      "layer": {
+        "girl": "item_culottes.png",
+        "boy": "item_culottes_male.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ],
+      "hairMask": {}
+    },
+    {
       "id": "skirt_corduroy",
       "slot": "bottom",
       "label": "Corduroy Skirt",
@@ -419,6 +453,23 @@
       "layer": {
         "girl": "item_gakuran_pants.png",
         "boy": "item_gakuran_pants_male.png"
+      },
+      "fits": [
+        "boy",
+        "girl"
+      ],
+      "hairMask": {}
+    },
+    {
+      "id": "tartan_pants",
+      "slot": "bottom",
+      "label": "Tartan Trousers",
+      "label_zh": "\u683c\u7d0b\u9577\u8932",
+      "unlockAt": 0,
+      "icon": "icon_tartan_pants.png",
+      "layer": {
+        "girl": "item_tartan_pants.png",
+        "boy": "item_tartan_pants_male.png"
       },
       "fits": [
         "boy",
@@ -876,5 +927,5 @@
       }
     }
   ],
-  "build": "e06987eaeb"
+  "build": "f20700e534"
 }
