@@ -82,7 +82,13 @@ body {
 h1 { font-size: 26px; margin: 0; letter-spacing: -0.02em; }
 .date { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
 
-.date-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.date-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+/* The label is never broken between characters. At phone width the header's
+   right-hand controls leave this column 171px, against the 207px the date
+   field and the button need side by side, and the flex row answered that by
+   squeezing the button to 34px and stacking it one glyph per line. It keeps
+   its width now and drops to the next line when there is no room beside. */
+.date-row .ghost.small { white-space: nowrap; flex: none; }
 .date-row input[type="date"] {
   border: 1px solid var(--line); background: var(--card); color: var(--muted);
   font: inherit; font-size: 13px; padding: 5px 9px; border-radius: 10px;
