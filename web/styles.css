@@ -633,21 +633,32 @@ textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
    corners, the panel loses its top ones, and the gap between them closes. */
 .list-row[aria-expanded="true"] {
   margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0;
-  border-bottom-color: transparent; border-color: var(--accent);
+  border-color: var(--accent);
   border-left-color: var(--mood, var(--accent));
+  /* Removed, not made transparent: a transparent bottom border still mitres
+     into the 4px mood spine and leaves a notch in it at the join. */
+  border-bottom-width: 0;
 }
 .list-detail {
   margin-top: 0; margin-bottom: 10px;
   border-top-left-radius: 0; border-top-right-radius: 0;
   border-color: var(--accent); border-left-color: var(--mood, var(--line));
+  /* No rule between the two: the row and its actions are one card, and a
+     divider made them read as two things stacked. */
+  border-top: none;
 }
-/* Under the calendar the panel has to name the day and draw the character,
-   because a grid cell shows neither. Under a list row both are already there
-   an inch above, so drawing them twice reads as a bug. The panel keeps what
-   the row does not have: the full note, and the actions. */
+/* The panel's own padding, rather than the actions' margin. With no top border
+   and no top padding that margin collapses straight out of the panel and pushes
+   the whole card 12px clear of the row, which is the seam this replaces. */
+.list-detail { padding-top: 13px; }
+.list-detail .detail-actions { margin-top: 0; }
+/* Under the calendar the panel has to name the day, draw the character and
+   print the note, because a grid cell shows none of them. Under a list row
+   all three are already there an inch above — the note in full, now that the
+   row runs to three lines — so the panel shows only what the row cannot: the
+   actions. */
 .list-detail > h3,
-.list-detail .entry-char { display: none; }
-.list-detail .detail-body { gap: 0; }
+.list-detail .detail-body { display: none; }
 
 .list-char {
   flex: 0 0 72px; width: 72px; max-width: 72px;
@@ -658,11 +669,11 @@ textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .list-head { display: flex; align-items: baseline; gap: 2px; flex-wrap: wrap; }
 .list-head strong { font-size: 14.5px; }
 
-/* Two lines is enough to recognise an entry; the row opens the full note. */
+/* Three lines to recognise an entry by; the row opens the full note. */
 .list-note {
   margin: 5px 0 0; font-size: 13.5px; color: var(--muted);
   white-space: pre-wrap; overflow: hidden;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
 }
 .list-tags { margin-top: 7px; }
 .list-photos { display: flex; gap: 5px; margin-top: 8px; }
