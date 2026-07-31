@@ -573,6 +573,10 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
         mask[cut:] = False
         print("hem trim: dropped %d px below y=%d" % (dropped, cut))
 
+    if name in FOOT_TRIM:
+        dropped, cuts = foot_trim(mask, lum < dark_level)
+        print("foot trim: dropped %d px, cut rows %s" % (dropped, cuts))
+
     out = T.copy()
     out[..., 3] = np.where(mask, T[..., 3], 0)
 
@@ -669,9 +673,7 @@ def main(render_path, name, master_name="base_char_master.png", dark_override=No
 # they painted a naked instep across the top of the shoe. Cut where each hem's
 # own dark outline finishes, which is the row the taper reaches before the
 # plateau begins.
-HEM_TRIM = {"yukata": 903, "yukata_male": 896, "sundress": 842,
-            "jeans": 914, "gakuran_pants": 914, "pyjama_pants": 916,
-            "joggers": 911, "cargo_pants": 914}
+HEM_TRIM = {"yukata": 903, "yukata_male": 896, "sundress": 842}
 
 # Only the girl's render is used. Hers covers the boy's legs to within 31px,
 # while his own render stands his feet wider apart than his body does and left
@@ -723,6 +725,46 @@ KEEP_INNER_WHITE = {"maryjanes"}
 # Her earmuffs are NOT listed. The same art on her head came out with no
 # enclosed islands at all, so there is nothing to close.
 FILL_HOLES = {"culottes": 600, "topknot": 600, "earmuffs_male": 1600}
+
+# Long bottoms whose render draws a bare foot below the hem — see HEM_TRIM,
+# which is what these used to use. A flat row cannot do it: the hem's bottom
+# outline is a curve, sitting at y=925 on the outer edge of a pyjama leg while
+# the foot beside it already starts at 916, so any row low enough to keep the
+# outline keeps part of the foot and any row high enough to lose the foot cuts
+# the outline off and leaves the hem visibly unfinished.
+FOOT_TRIM = {"pyjama_pants", "jeans", "gakuran_pants", "joggers", "cargo_pants"}
+
+FOOT_MIN_PX = 80        # smaller closed shapes are speckle, not a foot
+FOOT_START = 880        # rows above this are still leg, never a foot below a hem
+
+
+def foot_trim(mask, dark):
+    """Drop the bare foot the render drew below the hem, following the hem's curve.
+
+    The foot is a *closed region* of the line art: the hem's own outline bounds
+    it above, the foot's outline below. So it comes out as a component of the
+    non-ink area that is separate from the garment's fill, which is a structural
+    handle rather than a colour one — and colour is no use here, since a white
+    check in the plaid reads as skin to within 17 of the master's own.
+
+    Each column is then cut from the top of that region downward, so what
+    survives is exactly the hem outline above it, curve and all.
+    """
+    body = mask & ~dark
+    lab, comps = components(body)
+    if not comps:
+        return 0, []
+    dropped, cuts = 0, []
+    for cid, n in comps[1:]:            # comps[0] is the garment's own fill
+        ys, xs = np.nonzero(lab == cid)
+        if n < FOOT_MIN_PX or ys.min() < FOOT_START:
+            continue
+        for x in np.unique(xs):
+            top = ys[xs == x].min()
+            dropped += int(mask[top:, x].sum())
+            mask[top:, x] = False
+        cuts.append((int(ys.min()), int(ys.max())))
+    return dropped, cuts
 
 
 def fill_enclosed(mask, max_px):
