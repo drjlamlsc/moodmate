@@ -82,6 +82,10 @@ const state = {
   editing: null,                                 // date key currently being edited
   editMood: null,
   editTags: null,
+  // What is typed in the edit panel, kept outside the DOM because picking a
+  // mood or a tag re-renders the panel and would otherwise throw the text
+  // away. Not persisted — save() writes an explicit whitelist.
+  editNote: null,
   confirmDelete: null,                           // date key awaiting delete confirmation
   tagsExpanded: false,
   tagFilter: null,                               // tag id the calendar is filtered to
@@ -1128,7 +1132,17 @@ function renderList() {
     row.className = "list-row";
     row.type = "button";
     if (mood) row.style.setProperty("--mood", mood.color);
-    row.onclick = () => { setEntryDate(k); goto("today"); };
+    // Opens the same panel the calendar opens, rather than jumping to Today:
+    // the point of tapping a past entry is to read it and decide, and editing
+    // it in place is what the calendar already does. Tapping it again closes
+    // it, so the list is never stuck showing a day you have finished with.
+    row.setAttribute("aria-expanded", String(state.selectedDay === k));
+    row.onclick = () => {
+      state.selectedDay = state.selectedDay === k ? null : k;
+      state.editing = null;
+      state.confirmDelete = null;
+      refreshDetail();
+    };
 
     // Entries saved before outfits were recorded fall back to the current one
     // rather than showing an undressed character.
@@ -1183,6 +1197,15 @@ function renderList() {
 
     row.appendChild(body);
     wrap.appendChild(row);
+
+    // Directly under the row it belongs to, so the entry being edited stays
+    // next to the one you tapped rather than at the foot of the list.
+    if (state.selectedDay === k) {
+      const detail = document.createElement("div");
+      detail.className = "entry-detail list-detail";
+      wrap.appendChild(detail);
+      renderDetail(detail, k);
+    }
   }
 }
 
@@ -1266,7 +1289,7 @@ function renderHistory() {
     cal.appendChild(cell);
   }
 
-  renderDetail();
+  renderDetail(document.getElementById("entry-detail"), state.selectedDay);
 
   const total = Object.keys(state.entries).length;
   const monthKeys = Object.keys(state.entries).filter((k) => k.startsWith(monthPrefix));
@@ -1474,9 +1497,17 @@ function prettyDate(k) {
 /* The detail panel doubles as the editor for any past day, so a mistyped
    mood doesn't have to stay wrong forever. Today is editable here too, and
    from the Today screen. */
-function renderDetail() {
-  const detail = document.getElementById("entry-detail");
-  const k = state.selectedDay;
+// The panel lives in two places now — under the calendar, and under the tapped
+// row in the entry list — so it takes its host rather than reaching for one id.
+// Both read the same state.selectedDay, so a day opened in one is open in the
+// other, and there is no second selection to keep in step.
+function refreshDetail() {
+  renderHistory();
+  renderList();
+}
+
+function renderDetail(host, k) {
+  const detail = host;
   const entry = k && state.entries[k];
   detail.hidden = !entry;
   if (!entry) return;
@@ -1539,12 +1570,13 @@ function renderDetail() {
       state.editing = k;
       state.editMood = entry.mood;
       state.editTags = (entry.tags || []).slice();
-      renderDetail();
+      state.editNote = entry.note || "";
+      refreshDetail();
     };
     const del = document.createElement("button");
     del.className = "ghost danger";
     del.textContent = t("del");
-    del.onclick = () => { state.confirmDelete = k; renderDetail(); };
+    del.onclick = () => { state.confirmDelete = k; refreshDetail(); };
     actions.append(edit, del);
     detail.appendChild(actions);
 
@@ -1576,7 +1608,7 @@ function renderDetail() {
       const no = document.createElement("button");
       no.className = "ghost";
       no.textContent = t("keep");
-      no.onclick = () => { state.confirmDelete = null; renderDetail(); };
+      no.onclick = () => { state.confirmDelete = null; refreshDetail(); };
       warn.append(msg, yes, no);
       detail.appendChild(warn);
     }
@@ -1598,19 +1630,20 @@ function renderDetail() {
     label.className = "label";
     label.textContent = nameOf(m);
     b.append(label);
-    b.onclick = () => { state.editMood = m.key; renderDetail(); };
+    b.onclick = () => { state.editMood = m.key; refreshDetail(); };
     picker.appendChild(b);
   }
 
   const tagBox = buildTagPicker(state.editTags || [], (id) => {
     toggleIn(state.editTags, id);
-    renderDetail();
+    refreshDetail();
   });
 
   const ta = document.createElement("textarea");
   ta.rows = 3;
-  ta.value = entry.note || "";
+  ta.value = state.editNote != null ? state.editNote : (entry.note || "");
   ta.placeholder = "add a note…";
+  ta.oninput = () => { state.editNote = ta.value; };
 
   const row = document.createElement("div");
   row.className = "detail-actions";
@@ -1619,7 +1652,7 @@ function renderDetail() {
   ok.textContent = t("saveChanges");
   ok.onclick = () => {
     state.entries[k] = {
-      mood: state.editMood, note: ta.value.trim(), tags: (state.editTags || []).slice(),
+      mood: state.editMood, note: (state.editNote || "").trim(), tags: (state.editTags || []).slice(),
       // Editing a past day changes what you wrote, not what you wore.
       outfit: entry.outfit || Object.assign({}, state.outfit),
       character: entry.character || state.character,
@@ -1631,12 +1664,13 @@ function renderDetail() {
       state.draftTags = (state.editTags || []).slice();
       renderToday();
     }
-    renderHistory();
+    state.editNote = null;
+    refreshDetail();
   };
   const cancel = document.createElement("button");
   cancel.className = "ghost";
   cancel.textContent = t("cancel");
-  cancel.onclick = () => { state.editing = null; renderDetail(); };
+  cancel.onclick = () => { state.editing = null; state.editNote = null; refreshDetail(); };
   row.append(ok, cancel);
 
   detail.append(picker, tagBox, ta, row);

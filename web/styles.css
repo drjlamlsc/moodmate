@@ -629,6 +629,25 @@ textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
   border-radius: 14px;
 }
 .list-row:hover { border-color: var(--accent); border-left-color: var(--mood, var(--accent)); }
+/* The open row and its panel read as one object: the row loses its bottom
+   corners, the panel loses its top ones, and the gap between them closes. */
+.list-row[aria-expanded="true"] {
+  margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0;
+  border-bottom-color: transparent; border-color: var(--accent);
+  border-left-color: var(--mood, var(--accent));
+}
+.list-detail {
+  margin-top: 0; margin-bottom: 10px;
+  border-top-left-radius: 0; border-top-right-radius: 0;
+  border-color: var(--accent); border-left-color: var(--mood, var(--line));
+}
+/* Under the calendar the panel has to name the day and draw the character,
+   because a grid cell shows neither. Under a list row both are already there
+   an inch above, so drawing them twice reads as a bug. The panel keeps what
+   the row does not have: the full note, and the actions. */
+.list-detail > h3,
+.list-detail .entry-char { display: none; }
+.list-detail .detail-body { gap: 0; }
 
 .list-char {
   flex: 0 0 72px; width: 72px; max-width: 72px;
